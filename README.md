@@ -17,6 +17,21 @@ make db-up
 make test
 ```
 
+## Data
+
+Questions, document metadata and filing PDFs come from
+[FinanceBench](https://github.com/patronus-ai/financebench) by Patronus AI, licensed
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (noncommercial use only).
+Files are downloaded into `data/`, which is gitignored. The PDFs to fetch are listed in
+`data_manifest.txt`. If that file is missing, the script creates it from the documents with the
+most questions.
+
+```bash
+uv run python scripts/fetch_data.py            # fetch what data_manifest.txt lists
+uv run python scripts/fetch_data.py --top 10   # rebuild the manifest from the 10 most-asked docs
+uv run python scripts/fetch_data.py --force    # re-download everything
+```
+
 ## Roadmap
 
 - **Phase 1:** Ingestion + baseline RAG
