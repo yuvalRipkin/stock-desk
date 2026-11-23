@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down lint format test
+.PHONY: install db-up db-down lint format test ask
 
 install:
 	uv sync
@@ -19,3 +19,6 @@ format:
 
 test:
 	uv run pytest
+
+ask:
+	uv run python -m stockdesk.ask --doc $(DOC) "$(Q)"
