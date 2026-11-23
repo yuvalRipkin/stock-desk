@@ -5,9 +5,14 @@ description = "AI research agent for US public companies using SEC filings, pric
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "langchain-core>=1.8.4",
+    "langchain-openai>=1.8.5",
+    "langchain-postgres>=0.0.19",
+    "langchain-text-splitters>=1.2.0",
     "pgvector",
     "psycopg[binary]",
     "pydantic-settings",
+    "pypdf>=7.1.1",
     "python-dotenv",
     "requests>=2.34.2",
 ]
