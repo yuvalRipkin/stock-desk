@@ -95,6 +95,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [005_expand_k10](results/005_expand_k10.json) | expand (full pages, max 5) | 1000 / 200 overlap | 10 | 54.4% ± 5.1 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 0.0 | 1.55 s / 4.41 s* |
 | [005b_expand_k10_repeat](results/005b_expand_k10_repeat.json) | repeat of 005 (same code and config) | 1000 / 200 overlap | 10 | 47.8% ± 1.9 | 53.3% ± 0.0 | 56.7% ± 0.0 | 23.3% ± 3.3 | 1.50 s / 4.59 s* |
 | [006_expand_k10_p8](results/006_expand_k10_p8.json) | expand (full pages, max 8) | 1000 / 200 overlap | 10 | 56.7% ± 3.3 | 63.3% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 3.3 | 1.57 s / 4.23 s* |
+| [007_expand_p5_noexhibits](results/007_expand_p5_noexhibits.json) | expand (full pages, max 5), exhibits excluded | 1000 / 200 overlap | 10 | 54.4% ± 3.8 | 60.0% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 0.0 | 1.51 s / 4.33 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`.
@@ -138,6 +139,12 @@ the same). Accuracy still moved 6.6 points, from 54.4% to 47.8%. So between expe
 accuracy differences under about ±7 points (2 questions) are noise, wider than the per-run std
 suggests. Retrieval changes are judged by evidence hit, which is deterministic; accuracy only
 confirms large gains. See [the write-up](docs/notes/2026-11-24-noise-floor.md).
+
+**007 (expand, max 5 pages, exhibits excluded):** 006's evidence at 005's cost. Skipping pages
+from each filing's first attached exhibit on frees slots that exhibits took: evidence hit
+63.3% (+2 questions over 005, equal to 006) with about 15,500 characters of context, 31% less
+than 006. Accuracy 54.4% is unchanged within the noise floor. The best cost-effective setting
+so far. See [the write-up](docs/notes/2026-11-24-exhibits.md).
 
 ## Roadmap
 
