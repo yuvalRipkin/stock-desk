@@ -23,15 +23,11 @@ from pathlib import Path
 
 import requests
 
+from stockdesk.data import DATA_DIR, MANIFEST, PDF_DIR, QUESTIONS_FILE, ROOT, read_manifest
+
 BASE_URL = "https://raw.githubusercontent.com/patronus-ai/financebench/main"
 JSONL_FILES = ["financebench_open_source.jsonl", "financebench_document_information.jsonl"]
-QUESTIONS_FILE = "financebench_open_source.jsonl"
 DEFAULT_TOP = 5
-
-ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = ROOT / "data"
-PDF_DIR = DATA_DIR / "pdfs"
-MANIFEST = ROOT / "data_manifest.txt"
 
 MAX_ATTEMPTS = 3
 BACKOFF_SECONDS = 1.0
@@ -120,16 +116,6 @@ def download(
 # --- manifest ---------------------------------------------------------------------------------
 
 
-def read_manifest(path: Path) -> list[str]:
-    names: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        names.append(line.split("#", 1)[0].strip())
-    return names
-
-
 def build_manifest(questions_path: Path, top: int, out: Path) -> list[str]:
     counts: Counter[str] = Counter()
     with questions_path.open("r", encoding="utf-8") as f:
@@ -185,13 +171,13 @@ def main(argv: list[str] | None = None) -> int:
     for name in JSONL_FILES:
         fetch(f"{BASE_URL}/data/{name}", DATA_DIR / name, is_valid_jsonl)
 
-    questions_path = DATA_DIR / QUESTIONS_FILE
+    questions_path = QUESTIONS_FILE
     doc_names: list[str] = []
     if args.top is not None or not MANIFEST.exists():
         if is_valid_jsonl(questions_path):
             doc_names = build_manifest(questions_path, args.top or DEFAULT_TOP, MANIFEST)
         else:
-            log.error("cannot build manifest: %s is missing or invalid", QUESTIONS_FILE)
+            log.error("cannot build manifest: %s is missing or invalid", QUESTIONS_FILE.name)
             results["failed"].append(str(MANIFEST.relative_to(ROOT)))
     else:
         doc_names = read_manifest(MANIFEST)

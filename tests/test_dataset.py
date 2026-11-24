@@ -1,9 +1,10 @@
 import pytest
 
-from stockdesk.evals.dataset import DATASET, load_cases
+from stockdesk.data import QUESTIONS_FILE
+from stockdesk.evals.dataset import load_cases
 
 pytestmark = pytest.mark.skipif(
-    not DATASET.exists(), reason="FinanceBench data not fetched (run scripts/fetch_data.py)"
+    not QUESTIONS_FILE.exists(), reason="FinanceBench data not fetched (run scripts/fetch_data.py)"
 )
 
 

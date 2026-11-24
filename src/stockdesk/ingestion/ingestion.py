@@ -2,26 +2,14 @@
 
 import uuid
 from collections import defaultdict
-from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 from stockdesk.config import get_settings
+from stockdesk.data import PDF_DIR, read_manifest
 from stockdesk.store import get_store
-
-PDF_DIR = Path("data/pdfs")
-MANIFEST = Path("data_manifest.txt")
-
-
-def read_manifest() -> list[str]:
-    names = []
-    for line in MANIFEST.read_text().splitlines():
-        name = line.split("#")[0].strip()
-        if name:
-            names.append(name)
-    return names
 
 
 def load_pdf(doc_name: str) -> list[Document]:

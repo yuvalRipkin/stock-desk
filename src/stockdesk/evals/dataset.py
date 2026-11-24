@@ -2,11 +2,8 @@
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
 
-from stockdesk.ingestion.ingestion import read_manifest
-
-DATASET = Path("data/financebench_open_source.jsonl")
+from stockdesk.data import QUESTIONS_FILE, read_manifest
 
 
 @dataclass(frozen=True)
@@ -23,7 +20,7 @@ def load_cases(doc_names: list[str] | None = None) -> list[EvalCase]:
     """Return cases for `doc_names` (default: filings in data_manifest.txt), sorted by id."""
     wanted = set(doc_names if doc_names is not None else read_manifest())
     cases = []
-    for line in DATASET.read_text().splitlines():
+    for line in QUESTIONS_FILE.read_text().splitlines():
         if not line.strip():
             continue
         row = json.loads(line)

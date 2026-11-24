@@ -7,7 +7,7 @@ when ANY of them is retrieved: they measure "did retrieval find some gold eviden
 
 from rapidfuzz import fuzz
 
-from stockdesk.rag import REFUSAL_PHRASE
+from stockdesk.prompts import REFUSAL_PHRASE
 
 EVIDENCE_MATCH_THRESHOLD = 85
 REFUSAL = REFUSAL_PHRASE.lower()
