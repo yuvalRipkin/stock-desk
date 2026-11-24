@@ -14,6 +14,7 @@
     "max_pages": 5,
     "exclude_exhibits": true
   },
+  "metrics_version": 2,
   "git": {
     "commit": "b1087e49432235b1b51c298d95e4039bb1599526",
     "dirty": false
@@ -22,8 +23,8 @@
   "n_runs": 3,
   "aggregate": {
     "accuracy": {
-      "mean": 0.5444444444444444,
-      "std": 0.03849001794597504
+      "mean": 0.5555555555555556,
+      "std": 0.01924500897298752
     },
     "page_hit_rate": {
       "mean": 0.6,
@@ -34,8 +35,8 @@
       "std": 0.0
     },
     "refusal_rate": {
-      "mean": 0.2,
-      "std": 0.0
+      "mean": 0.15555555555555556,
+      "std": 0.01924500897298752
     },
     "avg_distinct_pages": {
       "mean": 5,
@@ -65,7 +66,7 @@
         "accuracy": 0.5666666666666667,
         "page_hit_rate": 0.6,
         "evidence_hit_rate": 0.6333333333333333,
-        "refusal_rate": 0.2,
+        "refusal_rate": 0.16666666666666666,
         "avg_distinct_pages": 5,
         "avg_context_chars": 15460.8,
         "latency_p50_ms": 1563.0830414993397,
@@ -386,10 +387,10 @@
             28
           ],
           "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "judge_reason": "The candidate answer says the quick ratio cannot be determined, but the gold answer states it improved from 0.67x in FY2022 to 0.69x in FY2023.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 14453,
           "latency_ms": 1386.0554159982712,
@@ -768,10 +769,10 @@
     {
       "summary": {
         "n": 30,
-        "accuracy": 0.5,
+        "accuracy": 0.5333333333333333,
         "page_hit_rate": 0.6,
         "evidence_hit_rate": 0.6333333333333333,
-        "refusal_rate": 0.2,
+        "refusal_rate": 0.13333333333333333,
         "avg_distinct_pages": 5,
         "avg_context_chars": 15460.8,
         "latency_p50_ms": 1518.3302914992964,
@@ -1092,10 +1093,10 @@
             28
           ],
           "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "judge_reason": "The candidate answer does not provide the substantive result that the quick ratio improved slightly from 0.67x to 0.69x between FY2022 and FY2023, and instead says it was not found.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 14453,
           "latency_ms": 1357.066249998752,
@@ -1390,11 +1391,11 @@
             98,
             138
           ],
-          "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "correct": true,
+          "judge_reason": "The candidate identifies customer deposits as the largest liability in 2022, which matches the gold answer; the extra hedging does not contradict that conclusion.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 12828,
           "latency_ms": 1676.3639159980812,
@@ -1477,7 +1478,7 @@
         "accuracy": 0.5666666666666667,
         "page_hit_rate": 0.6,
         "evidence_hit_rate": 0.6333333333333333,
-        "refusal_rate": 0.2,
+        "refusal_rate": 0.16666666666666666,
         "avg_distinct_pages": 5,
         "avg_context_chars": 15460.8,
         "latency_p50_ms": 1435.2782704991114,
@@ -1798,10 +1799,10 @@
             28
           ],
           "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "judge_reason": "The candidate answer says the quick ratio could not be determined, but the gold answer states it improved from 0.67x to 0.69x between FY2022 and FY2023.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 14453,
           "latency_ms": 1505.0983330002055,
@@ -2177,5 +2178,75 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 1,
+    "to_metrics_version": 2,
+    "timestamp": "2026-11-24T12:21:00.135003+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.5444444444444444,
+        "std": 0.03849001794597504
+      },
+      "refusal_rate": {
+        "mean": 0.2,
+        "std": 0.0
+      }
+    },
+    "rejudged": [
+      {
+        "run": 1,
+        "id": "financebench_id_00799",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The candidate answer says the quick ratio cannot be determined, but the gold answer states it improved from 0.67x in FY2022 to 0.69x in FY2023."
+      },
+      {
+        "run": 2,
+        "id": "financebench_id_00799",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The candidate answer does not provide the substantive result that the quick ratio improved slightly from 0.67x to 0.69x between FY2022 and FY2023, and instead says it was not found."
+      },
+      {
+        "run": 2,
+        "id": "financebench_id_01964",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          true
+        ],
+        "judge_reason": "The candidate identifies customer deposits as the largest liability in 2022, which matches the gold answer; the extra hedging does not contradict that conclusion."
+      },
+      {
+        "run": 3,
+        "id": "financebench_id_00799",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The candidate answer says the quick ratio could not be determined, but the gold answer states it improved from 0.67x to 0.69x between FY2022 and FY2023."
+      }
+    ]
+  }
 }

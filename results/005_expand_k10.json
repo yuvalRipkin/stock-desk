@@ -13,6 +13,7 @@
     "retriever": "expand",
     "max_pages": 5
   },
+  "metrics_version": 2,
   "git": {
     "commit": "937b7aba1ba6c1b1cda2626e6fef1e62bb3cfff3",
     "dirty": false
@@ -2176,5 +2177,22 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 1,
+    "to_metrics_version": 2,
+    "timestamp": "2026-11-24T12:20:48.269157+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.5444444444444444,
+        "std": 0.05091750772173154
+      },
+      "refusal_rate": {
+        "mean": 0.2,
+        "std": 0.0
+      }
+    },
+    "rejudged": []
+  }
 }

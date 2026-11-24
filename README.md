@@ -73,10 +73,11 @@ Each run answers all 30 questions with `stockdesk.rag.answer`, then:
 
 - **Accuracy:** an LLM judge (`JUDGE_MODEL`, default `gpt-5.4`, stronger than the answering
   model) compares the answer to the gold answer. Numbers may differ by rounding (up to 1%),
-  every part of a multi-part question must be right, and a refusal is always wrong.
+  every part of a multi-part question must be right, and an answer that only says it was not
+  found is wrong. A hedged answer is graded on its substantive part.
 - **Page hit / evidence hit:** whether any gold evidence page is among the retrieved pages, and
   whether any gold evidence text fuzzy-matches a retrieved chunk.
-- **Refusal rate:** how often the answer is "Not found in the filing."
+- **Refusal rate:** how often the answer is only "Not found in the filing."
 
 Results go to `results/<NAME>.json` with the full config, the git commit, a dirty flag, every
 answer and the judge's reason. The runner refuses to overwrite an existing file unless you pass
@@ -90,15 +91,25 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 |---|---|---|---|---|---|---|---|---|
 | [001_naive_1000](results/001_naive_1000.json) | naive | 1000 / 200 overlap | 5 | 38.9% ± 5.1 | 50.0% ± 0.0 | 40.0% ± 0.0 | 34.4% ± 5.1 | 1.38 s / 2.31 s |
 | [002_k10](results/002_k10.json) | naive | 1000 / 200 overlap | 10 | 50.0% ± 3.3 | 63.3% ± 0.0 | 50.0% ± 0.0 | 21.1% ± 1.9 | 1.43 s / 2.39 s |
-| [003_dedup_k5](results/003_dedup_k5.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 5 | 33.3% ± 3.3 | 53.3% ± 0.0 | 40.0% ± 0.0 | 37.8% ± 3.8 | 1.33 s / 2.26 s |
+| [003_dedup_k5](results/003_dedup_k5.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 5 | 33.3% ± 3.3 | 53.3% ± 0.0 | 40.0% ± 0.0 | 35.6% ± 1.9 | 1.33 s / 2.26 s |
 | [004_dedup_k10](results/004_dedup_k10.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 10 | 45.6% ± 5.1 | 66.7% ± 0.0 | 50.0% ± 0.0 | 26.7% ± 0.0 | 1.48 s / 2.25 s |
 | [005_expand_k10](results/005_expand_k10.json) | expand (full pages, max 5) | 1000 / 200 overlap | 10 | 54.4% ± 5.1 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 0.0 | 1.55 s / 4.41 s* |
-| [005b_expand_k10_repeat](results/005b_expand_k10_repeat.json) | repeat of 005 (same code and config) | 1000 / 200 overlap | 10 | 47.8% ± 1.9 | 53.3% ± 0.0 | 56.7% ± 0.0 | 23.3% ± 3.3 | 1.50 s / 4.59 s* |
+| [005b_expand_k10_repeat](results/005b_expand_k10_repeat.json) | repeat of 005 (same code and config) | 1000 / 200 overlap | 10 | 48.9% ± 1.9 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 3.3 | 1.50 s / 4.59 s* |
 | [006_expand_k10_p8](results/006_expand_k10_p8.json) | expand (full pages, max 8) | 1000 / 200 overlap | 10 | 56.7% ± 3.3 | 63.3% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 3.3 | 1.57 s / 4.23 s* |
-| [007_expand_p5_noexhibits](results/007_expand_p5_noexhibits.json) | expand (full pages, max 5), exhibits excluded | 1000 / 200 overlap | 10 | 54.4% ± 3.8 | 60.0% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 0.0 | 1.51 s / 4.33 s* |
+| [007_expand_p5_noexhibits](results/007_expand_p5_noexhibits.json) | expand (full pages, max 5), exhibits excluded | 1000 / 200 overlap | 10 | 55.6% ± 1.9 | 60.0% ± 0.0 | 63.3% ± 0.0 | 15.6% ± 1.9 | 1.51 s / 4.33 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`.
+
+**Scoring: metrics v2.** All results are scored with metrics version 2 (`metrics_version` in
+each file). Version 1 counted an answer as a refusal if "Not found in the filing" appeared
+anywhere in it, so a hedged answer (a real answer that also says "Not found in the filing") was
+marked wrong without being judged. Version 2 counts only an answer that is the phrase alone;
+everything else goes to the judge, which grades the substantive part. The saved answers were
+rescored without rerunning RAG (`uv run python -m stockdesk.evals.rescore results/<name>.json`):
+9 of 720 records changed refusal status (in 003, 005b and 007), and 2 of them turned out
+correct (00720 in 005b, 01964 in 007). Accuracy moved +1.1 points in 005b and 007; refusal
+rates dropped in 003, 005b and 007. Each file's `rescore` block lists what was re-judged.
 
 **002 (k=10):** retrieving 10 chunks instead of 5 finds the gold evidence for 3 more questions
 and lifts accuracy by 11 points, more than twice the baseline's run-to-run spread. Refusals drop
@@ -135,7 +146,7 @@ not yet evidence of distraction. \*Cold-start p95 again. 005 is cheaper, 006 fin
 
 **005b (repeat of 005), and the noise floor:** an accidental rerun of 005 with the same code
 and config (88 of 90 records retrieved identical pages; page hit, evidence hit and context are
-the same). Accuracy still moved 6.6 points, from 54.4% to 47.8%. So between experiments,
+the same). Accuracy still moved 5.5 points, from 54.4% to 48.9%. So between experiments,
 accuracy differences under about ±7 points (2 questions) are noise, wider than the per-run std
 suggests. Retrieval changes are judged by evidence hit, which is deterministic; accuracy only
 confirms large gains. See [the write-up](docs/notes/2026-11-24-noise-floor.md).
@@ -143,7 +154,7 @@ confirms large gains. See [the write-up](docs/notes/2026-11-24-noise-floor.md).
 **007 (expand, max 5 pages, exhibits excluded):** 006's evidence at 005's cost. Skipping pages
 from each filing's first attached exhibit on frees slots that exhibits took: evidence hit
 63.3% (+2 questions over 005, equal to 006) with about 15,500 characters of context, 31% less
-than 006. Accuracy 54.4% is unchanged within the noise floor. The best cost-effective setting
+than 006. Accuracy 55.6% is unchanged within the noise floor. The best cost-effective setting
 so far. See [the write-up](docs/notes/2026-11-24-exhibits.md).
 
 ## Roadmap

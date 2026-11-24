@@ -13,6 +13,7 @@
     "retriever": "expand",
     "max_pages": 5
   },
+  "metrics_version": 2,
   "git": {
     "commit": "1655a7f188cab85928fc2d5f31820ec4a74b6469",
     "dirty": false
@@ -21,7 +22,7 @@
   "n_runs": 3,
   "aggregate": {
     "accuracy": {
-      "mean": 0.4777777777777778,
+      "mean": 0.4888888888888889,
       "std": 0.01924500897298752
     },
     "page_hit_rate": {
@@ -33,8 +34,8 @@
       "std": 0.0
     },
     "refusal_rate": {
-      "mean": 0.23333333333333334,
-      "std": 0.033333333333333326
+      "mean": 0.2,
+      "std": 0.03333333333333334
     },
     "avg_distinct_pages": {
       "mean": 5,
@@ -767,10 +768,10 @@
     {
       "summary": {
         "n": 30,
-        "accuracy": 0.4666666666666667,
+        "accuracy": 0.5,
         "page_hit_rate": 0.5333333333333333,
         "evidence_hit_rate": 0.5666666666666667,
-        "refusal_rate": 0.26666666666666666,
+        "refusal_rate": 0.2,
         "avg_distinct_pages": 5,
         "avg_context_chars": 15264.8,
         "latency_p50_ms": 1407.3554794995289,
@@ -998,11 +999,11 @@
             162,
             5
           ],
-          "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer by stating that gross margin is not a meaningful metric for American Express and explaining that the filing does not measure performance using gross margin.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 14089,
           "latency_ms": 1524.8229169956176,
@@ -1091,10 +1092,10 @@
             28
           ],
           "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "judge_reason": "The gold answer states the quick ratio improved from 0.67x to 0.69x, while the candidate incorrectly says it cannot be determined from the filing.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 14453,
           "latency_ms": 1429.3265419983072,
@@ -1476,7 +1477,7 @@
         "accuracy": 0.4666666666666667,
         "page_hit_rate": 0.5333333333333333,
         "evidence_hit_rate": 0.5666666666666667,
-        "refusal_rate": 0.2,
+        "refusal_rate": 0.16666666666666666,
         "avg_distinct_pages": 5,
         "avg_context_chars": 15264.8,
         "latency_p50_ms": 1442.5546879974718,
@@ -1797,10 +1798,10 @@
             28
           ],
           "correct": false,
-          "judge_reason": "The answer is a refusal.",
+          "judge_reason": "The candidate does not provide the required substantive answer, while the gold answer states the quick ratio improved slightly from 0.67x in FY2022 to 0.69x in FY2023.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": true,
+          "refusal": false,
           "distinct_pages": 5,
           "context_chars": 14453,
           "latency_ms": 1737.4095000050147,
@@ -2176,5 +2177,62 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 1,
+    "to_metrics_version": 2,
+    "timestamp": "2026-11-24T12:20:53.362431+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.4777777777777778,
+        "std": 0.01924500897298752
+      },
+      "refusal_rate": {
+        "mean": 0.23333333333333334,
+        "std": 0.033333333333333326
+      }
+    },
+    "rejudged": [
+      {
+        "run": 2,
+        "id": "financebench_id_00720",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          true
+        ],
+        "judge_reason": "The candidate matches the gold answer by stating that gross margin is not a meaningful metric for American Express and explaining that the filing does not measure performance using gross margin."
+      },
+      {
+        "run": 2,
+        "id": "financebench_id_00799",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The gold answer states the quick ratio improved from 0.67x to 0.69x, while the candidate incorrectly says it cannot be determined from the filing."
+      },
+      {
+        "run": 3,
+        "id": "financebench_id_00799",
+        "refusal": [
+          true,
+          false
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The candidate does not provide the required substantive answer, while the gold answer states the quick ratio improved slightly from 0.67x in FY2022 to 0.69x in FY2023."
+      }
+    ]
+  }
 }

@@ -21,6 +21,9 @@ experiments directly.
 | Refusal | 20.0% | 23.3% ± 3.3 |
 | Context per question | ~15,240 chars | ~15,265 chars |
 
+**Rescored with metrics v2** (see README): 005b accuracy is 48.9% ± 1.9, a 5.5-point move
+from 005; the conclusion is unchanged. Numbers below are as first scored (v1).
+
 Retrieval is essentially identical: 88 of 90 records retrieved the same pages; the other two
 are one question (00720) where the vector search returned a different 4th/5th page. Yet
 accuracy moved **6.6 points**, 6 fewer correct answers out of 90, about 2 questions per run.

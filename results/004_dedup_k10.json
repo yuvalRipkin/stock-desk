@@ -13,6 +13,7 @@
     "retriever": "dedup",
     "fetch_multiplier": 4
   },
+  "metrics_version": 2,
   "git": {
     "commit": "a20aa8db2908e28719b2a054241ed2eb202c0c38",
     "dirty": false
@@ -2529,5 +2530,22 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 1,
+    "to_metrics_version": 2,
+    "timestamp": "2026-11-24T12:20:48.265791+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.45555555555555555,
+        "std": 0.05091750772173154
+      },
+      "refusal_rate": {
+        "mean": 0.26666666666666666,
+        "std": 0.0
+      }
+    },
+    "rejudged": []
+  }
 }
