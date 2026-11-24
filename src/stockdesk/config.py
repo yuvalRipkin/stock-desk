@@ -14,9 +14,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Infrastructure / secrets
-    database_url: str = "postgresql://stockdesk:stockdesk@localhost:5432/stockdesk"
+    database_url: str = "postgresql+psycopg://stockdesk:change-me@localhost:5432/stockdesk"
     openai_api_key: SecretStr | None = None
-    anthropic_api_key: SecretStr | None = None
     log_level: str = "INFO"
 
     # Experiment config
@@ -30,9 +29,7 @@ class Settings(BaseSettings):
 
     def experiment_config(self) -> dict[str, object]:
         """The settings that define an experiment, safe to write into results files."""
-        return self.model_dump(
-            exclude={"database_url", "openai_api_key", "anthropic_api_key", "log_level"}
-        )
+        return self.model_dump(exclude={"database_url", "openai_api_key", "log_level"})
 
 
 @cache
