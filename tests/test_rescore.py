@@ -136,11 +136,11 @@ def test_cli_writes_file_and_refuses_second_rescore(
 ) -> None:
     path = tmp_path / "r.json"
     path.write_text(json.dumps(results))
-    monkeypatch.setattr(
-        rescore_module, "judge", MagicMock(return_value=Verdict(correct=True, reason="ok"))
-    )
+    fake_judge = MagicMock(return_value=Verdict(correct=True, reason="ok"))
+    monkeypatch.setattr(rescore_module, "judge", fake_judge)
 
     assert rescore_module.main([str(path)]) == 0
+    assert fake_judge.call_count == 2  # the mock, not the real judge, was used
     assert json.loads(path.read_text())["metrics_version"] == METRICS_VERSION
     assert list(tmp_path.iterdir()) == [path]  # no leftover .part file
 

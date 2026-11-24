@@ -56,8 +56,12 @@ def check_summary(records: list[dict], stored: dict, where: str) -> None:
         raise SummaryMismatch(f"{where}: recomputed {bad} differ from the stored summary")
 
 
-def rescore(results: dict, judge_fn: Judge = judge) -> dict:
-    """Return a rescored copy of a results dict. Raises AlreadyRescored or SummaryMismatch."""
+def rescore(results: dict, judge_fn: Judge | None = None) -> dict:
+    """Return a rescored copy of a results dict. Raises AlreadyRescored or SummaryMismatch.
+
+    judge_fn defaults to the module's judge, looked up at call time (so tests can patch it).
+    """
+    judge_fn = judge_fn or judge
     version = results.get("metrics_version", 1)
     if version >= METRICS_VERSION:
         raise AlreadyRescored(f"already at metrics_version {version}")
