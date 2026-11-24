@@ -100,75 +100,22 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [008_rewrite_multi](results/008_rewrite_multi.json) | 007 + multi-query rewriting (3 rewrites, RRF) | 1000 / 200 overlap | 10 per query | 54.4% ± 13.5 | 63.3% ± 5.8 | 64.4% ± 6.9 | 11.1% ± 5.1 | 4.48 s / 8.41 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
-by `gpt-5.4`.
+by `gpt-5.4`. \*p95 includes a cold start (the first question per filing parses its PDF).
+Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
-**Scoring: metrics v2.** All results are scored with metrics version 2 (`metrics_version` in
-each file). Version 1 counted an answer as a refusal if "Not found in the filing" appeared
-anywhere in it, so a hedged answer (a real answer that also says "Not found in the filing") was
-marked wrong without being judged. Version 2 counts only an answer that is the phrase alone;
-everything else goes to the judge, which grades the substantive part. The saved answers were
-rescored without rerunning RAG (`uv run python -m stockdesk.evals.rescore results/<name>.json`):
-9 of 720 records changed refusal status (in 003, 005b and 007), and 2 of them turned out
-correct (00720 in 005b, 01964 in 007). Accuracy moved +1.1 points in 005b and 007; refusal
-rates dropped in 003, 005b and 007. Each file's `rescore` block lists what was re-judged.
+**Metrics v2:** an answer is a refusal only if it is "Not found in the filing" alone; hedged
+answers go to the judge. All results were rescored (9 of 720 records changed).
 
-**002 (k=10):** retrieving 10 chunks instead of 5 finds the gold evidence for 3 more questions
-and lifts accuracy by 11 points, more than twice the baseline's run-to-run spread. Refusals drop
-from 34% to 21%. Retrieval still matters most: with the gold passage retrieved, 64% of answers
-are correct; without it, 35%. Even with the passage, about a third of answers are wrong, so
-generation is a second bottleneck.
-
-**Cost:** k=10 doubles the retrieved context, so the answering model's input tokens per question
-roughly double. Latency barely changes. The embedding call and the judge (which never sees the
-context) cost the same.
-
-**003 (dedup, k=5):** hurts. Same-page chunks are complementary (split passages), not
-duplicates. Keeping one chunk per page reaches 5 distinct pages (vs 4.4), but accuracy is 5.6
-points below the baseline and refusals rise. That drop is only about one baseline std; the
-stronger evidence is per question: two questions that were right 3/3 became wrong 3/3 because
-dedup dropped the second chunk of their gold page. See
-[the write-up](docs/notes/2026-11-24-dedup-negative.md).
-
-**004 (dedup, k=10):** confirms 003 at k=10: more distinct pages (10 vs 8.1), no extra evidence.
-Evidence hit stays at 50%, and accuracy (45.6%) is within noise of 002's 50.0%.
-
-**005 (expand, k=10, max 5 pages):** the best evidence hit so far (56.7%, +2 questions over
-002), and accuracy 54.4%, though that +4.4 points over 002 is within noise. Sending whole pages
-fixes split passages, but the 5-page cap drops 3 gold pages that ranked 6th or 7th, so page hit
-falls to 53.3%. Context is about 15,200 characters per question. \*The p95 is a cold start: the
-first question per filing parses its PDF; warm runs have a p95 of 2.3–2.9 s. See
-[the write-up](docs/notes/2026-11-24-page-expansion.md).
-
-**006 (expand, max 8 pages):** raising the cap recovers the three capped gold pages: page hit
-back to 63.3% and evidence hit 63.3% (+2 questions over 005), the best so far. Accuracy 56.7%
-(+2.3, within noise). Context rises 47%, to about 22,500 characters. Accuracy now trails
-evidence hit, but the per-question drops behind that gap also occur in 005b (below), so it is
-not yet evidence of distraction. \*Cold-start p95 again. 005 is cheaper, 006 finds more evidence; the re-ranker will decide between them.
-
-**005b (repeat of 005), and the noise floor:** an accidental rerun of 005 with the same code
-and config (88 of 90 records retrieved identical pages; page hit, evidence hit and context are
-the same). Accuracy still moved 5.5 points, from 54.4% to 48.9%. So between experiments,
-accuracy differences under about ±7 points (2 questions) are noise, wider than the per-run std
-suggests. Retrieval changes are judged by evidence hit, which is deterministic; accuracy only
-confirms large gains. See [the write-up](docs/notes/2026-11-24-noise-floor.md).
-
-**007 (expand, max 5 pages, exhibits excluded):** 006's evidence at 005's cost. Skipping pages
-from each filing's first attached exhibit on frees slots that exhibits took: evidence hit
-63.3% (+2 questions over 005, equal to 006) with about 15,500 characters of context, 31% less
-than 006. Accuracy 55.6% is unchanged within the noise floor. The best cost-effective setting
-so far. See [the write-up](docs/notes/2026-11-24-exhibits.md).
-
-**008 (007 + multi-query rewriting):** no measurable gain; adds retrieval variance and 3x
-latency. `gpt-5.4-mini` rewrites each question into 3 queries in 10-K terms (statements, line
-items, sections), and the question plus its rewrites are merged with Reciprocal Rank Fusion.
-Evidence hit 64.4% vs 63.3% is within noise: quick-ratio questions 00222 and 00799 now find
-their balance sheets in every run, but 00563 loses its evidence and three others become flaky.
-The rewrites differ per run, so retrieval is no longer deterministic (5 of 30 questions kept
-the same pages across runs, vs 30 of 30 in 007) and accuracy swings from 40.0% to 66.7% per
-run. The target 01964 is not fixed: same pages as 007, gold page 97 still unranked. Latency
-p50 triples to 4.5 s. \*Run 1's p95 is a cold start; warm runs are 5.4–6.3 s.
-`QUERY_REWRITE` stays `none` by default, and 007 remains the best config. See
-[the write-up](docs/notes/2026-11-24-query-rewriting.md).
+- **002 (k=10):** +11 points accuracy, +3 evidence questions over 001. Adopted.
+- **003 / 004 (one chunk per page):** worse; same-page chunks are one split passage. Rejected.
+- **005 (page expansion, 5 pages):** evidence hit 56.7%, best so far, but the cap cuts 3 gold
+  pages. Adopted.
+- **005b (repeat of 005):** same retrieval, accuracy −5.5. Accuracy noise is about ±7 points, so
+  retrieval is judged by evidence hit.
+- **006 (8 pages):** evidence hit 63.3%, at +47% context. Deferred.
+- **007 (exhibits excluded):** 006's evidence hit at 005's context. Adopted; best config.
+- **008 (multi-query rewriting):** no measurable gain; adds retrieval variance and 3x latency.
+  Rejected.
 
 ## Roadmap
 
