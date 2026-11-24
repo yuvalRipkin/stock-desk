@@ -21,7 +21,13 @@ from stockdesk.config import get_settings
 from stockdesk.data import ROOT
 from stockdesk.evals.dataset import EvalCase, load_cases
 from stockdesk.evals.judge import judge
-from stockdesk.evals.metrics import distinct_pages, evidence_hit, is_refusal, page_hit
+from stockdesk.evals.metrics import (
+    METRICS_VERSION,
+    distinct_pages,
+    evidence_hit,
+    is_refusal,
+    page_hit,
+)
 from stockdesk.rag import answer, build_context
 
 RESULTS_DIR = ROOT / "results"
@@ -227,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
         "name": args.name,
         "timestamp": started.isoformat(),
         "config": get_settings().experiment_config(),
+        "metrics_version": METRICS_VERSION,
         "git": git,
         "n_cases": len(cases),
         "n_runs": args.runs,

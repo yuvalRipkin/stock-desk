@@ -5,9 +5,18 @@ when ANY of them is retrieved: they measure "did retrieval find some gold eviden
 "did it find all of it".
 """
 
+import string
+
 from rapidfuzz import fuzz
 
 from stockdesk.prompts import REFUSAL_PHRASE
+
+# Version of the scoring rules, recorded in every results file.
+#   1: an answer was a refusal if REFUSAL_PHRASE appeared anywhere in it, so a hedged answer
+#      ("Customer deposits... Not found in the filing.") was marked wrong without being judged.
+#   2: an answer is a refusal only if it is REFUSAL_PHRASE alone (after normalizing); anything
+#      with other content goes to the judge, which grades the substantive answer.
+METRICS_VERSION = 2
 
 EVIDENCE_MATCH_THRESHOLD = 85
 REFUSAL = REFUSAL_PHRASE.lower()
@@ -44,8 +53,9 @@ def evidence_hit(
 
 
 def is_refusal(answer: str) -> bool:
-    """True if the answer contains the prompt's refusal phrase (case-insensitive)."""
-    return REFUSAL in answer.lower()
+    """True if the answer is only the refusal phrase (case, whitespace, end punctuation ignored)."""
+    normalized = " ".join(answer.lower().split()).rstrip(string.punctuation + " ")
+    return normalized == REFUSAL
 
 
 def distinct_pages(retrieved_pages: list[int]) -> int:

@@ -57,3 +57,19 @@ def test_refusal_short_circuits_without_llm(chat_model: MagicMock) -> None:
     assert verdict.correct is False
     chat_model.invoke.assert_not_called()
     judge_module.ChatOpenAI.assert_not_called()
+
+
+def test_hedged_answer_is_judged_not_short_circuited(chat_model: MagicMock) -> None:
+    hedged = f"Customer deposits were the largest liability. {REFUSAL_PHRASE}."
+
+    judge(QUESTION, GOLD, hedged)
+
+    chat_model.invoke.assert_called_once()
+    assert hedged in prompt_text(chat_model)
+
+
+def test_judge_prompt_grades_the_substantive_part_of_hedged_answers() -> None:
+    from stockdesk.prompts import JUDGE_PROMPT
+
+    assert "only says it was not found is incorrect" in JUDGE_PROMPT
+    assert "judge the substantive answer" in JUDGE_PROMPT

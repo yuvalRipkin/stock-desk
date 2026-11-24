@@ -59,8 +59,23 @@ def test_is_refusal_case_insensitive():
     assert is_refusal("NOT FOUND IN THE FILING")
 
 
-def test_is_refusal_inside_longer_answer():
-    assert is_refusal("I checked the excerpts, but this is not found in the filing, sorry.")
+def test_is_refusal_ignores_whitespace_and_end_punctuation():
+    assert is_refusal("  Not found\nin the filing!  ")
+    assert is_refusal('"Not found in the filing."') is False  # judge grades it instead
+
+
+def test_hedged_answer_is_not_a_refusal():
+    answer = "Customer deposits were the largest liability in 2022. Not found in the filing."
+    assert not is_refusal(answer)
+
+
+def test_refusal_followed_by_explanation_is_not_a_refusal():
+    assert not is_refusal("Not found in the filing. The excerpts do not include the balance sheet.")
+
+
+def test_phrase_inside_a_real_answer_is_not_a_refusal():
+    assert not is_refusal("I checked the excerpts, but this is not found in the filing, sorry.")
+    assert not is_refusal("0 (Not found in the filing.)")
 
 
 def test_is_refusal_normal_answer():
