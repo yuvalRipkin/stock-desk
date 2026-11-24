@@ -1,10 +1,10 @@
-"""Tests for page-dedup and retriever dispatch. No DB: dedup_by_page is pure."""
+"""Tests for page helpers and retriever dispatch. No DB: dedup_by_page is pure."""
 
 import pytest
 from langchain_core.documents import Document
 
-from stockdesk.retrieval import dedup, get_retriever, naive
-from stockdesk.retrieval.dedup import dedup_by_page
+from stockdesk.retrieval import get_retriever, naive
+from stockdesk.retrieval.pages import dedup_by_page
 
 
 def chunk(page: int, text: str = "", doc_name: str = "DOC") -> Document:
@@ -59,9 +59,9 @@ def test_same_page_number_in_different_docs_is_kept():
 
 def test_dispatch_returns_the_right_retriever():
     assert get_retriever("naive") is naive.retrieve
-    assert get_retriever("dedup") is dedup.retrieve
 
 
-def test_dispatch_rejects_unknown_name():
-    with pytest.raises(ValueError, match="unknown retriever 'bm25'"):
-        get_retriever("bm25")
+@pytest.mark.parametrize("name", ["bm25", "dedup"])
+def test_dispatch_rejects_unknown_name(name: str):
+    with pytest.raises(ValueError, match=f"unknown retriever '{name}'"):
+        get_retriever(name)

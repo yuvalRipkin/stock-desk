@@ -8,10 +8,10 @@ Retriever = Callable[[str, str | None, int | None], list[Document]]
 
 
 def get_retriever(name: str) -> Retriever:
-    """Return the retrieve function for a RETRIEVER setting value ("naive" or "dedup")."""
-    from stockdesk.retrieval import dedup, naive
+    """Return the retrieve function for a RETRIEVER setting value ("naive")."""
+    from stockdesk.retrieval import naive
 
-    retrievers: dict[str, Retriever] = {"naive": naive.retrieve, "dedup": dedup.retrieve}
+    retrievers: dict[str, Retriever] = {"naive": naive.retrieve}
     if name not in retrievers:
         raise ValueError(f"unknown retriever {name!r}; expected one of {sorted(retrievers)}")
     return retrievers[name]
