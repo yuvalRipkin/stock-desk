@@ -40,3 +40,10 @@ uv run python scripts/fetch_data.py --force    # re-download everything
 - **Phase 4:** LangGraph agent + tools + routing
 - **Phase 5:** LLM judge + CI regression subset
 - **Phase 6:** Tracing, caching, cost/latency
+
+## License
+
+The code is released under the [MIT License](LICENSE). The FinanceBench data (questions, document
+metadata and filing PDFs) is licensed separately under
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) by Patronus AI and is not covered
+by the code license. It is not included in this repository.
