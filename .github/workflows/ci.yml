@@ -19,7 +19,7 @@ jobs:
         run: uv sync --locked
 
       - name: Lint
-        run: uv run ruff check .
+        run: make lint
 
       - name: Test
-        run: uv run pytest
+        run: make test
