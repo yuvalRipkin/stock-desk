@@ -1,10 +1,17 @@
 # stock-desk
 
-stock-desk is an AI research agent that answers questions about US public companies by
-grounding its answers in SEC filings (10-K/10-Q), historical price data and technical
-indicators. Filings are ingested and indexed in PostgreSQL with pgvector, retrieved with a
-hybrid BM25 + vector search, and reasoned over by a LangGraph agent, with answer quality
-measured against the FinanceBench benchmark and runs traced via OpenTelemetry / Arize Phoenix.
+stock-desk answers questions about US public companies from their SEC filings, and measures how
+well it does against the [FinanceBench](https://github.com/patronus-ai/financebench) benchmark.
+
+What exists today:
+
+- **Naive RAG over 5 filings.** The 10-Ks listed in `data_manifest.txt` are split into
+  1000-character chunks, embedded with OpenAI `text-embedding-3-small`, and stored in PostgreSQL
+  with pgvector. A question is answered by vector search over one filing (top 5 chunks) and an
+  LLM prompted to answer only from those excerpts, cite page numbers, or reply
+  "Not found in the filing."
+- **FinanceBench eval (in progress).** A loader for the 30 FinanceBench questions about those
+  filings, plus retrieval and answer metrics. The eval runner and LLM judge are not written yet.
 
 ## Quickstart
 
@@ -34,12 +41,13 @@ uv run python scripts/fetch_data.py --force    # re-download everything
 
 ## Roadmap
 
-- **Phase 1:** Ingestion + baseline RAG
-- **Phase 2:** FinanceBench evals
-- **Phase 3:** Hybrid search + re-ranking
-- **Phase 4:** LangGraph agent + tools + routing
-- **Phase 5:** LLM judge + CI regression subset
-- **Phase 6:** Tracing, caching, cost/latency
+- **Phase 1: Ingestion + baseline RAG** (done)
+- **Phase 2: FinanceBench evals** (in progress: dataset loader and metrics done; runner next)
+- **Phase 3: Hybrid search + re-ranking** (planned): BM25 + vector retrieval
+- **Phase 4: LangGraph agent + tools + routing** (planned): including price data and technical
+  indicators
+- **Phase 5: LLM judge + CI regression subset** (planned)
+- **Phase 6: Tracing, caching, cost/latency** (planned): OpenTelemetry / Arize Phoenix
 
 ## License
 
