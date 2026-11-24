@@ -93,6 +93,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [003_dedup_k5](results/003_dedup_k5.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 5 | 33.3% ± 3.3 | 53.3% ± 0.0 | 40.0% ± 0.0 | 37.8% ± 3.8 | 1.33 s / 2.26 s |
 | [004_dedup_k10](results/004_dedup_k10.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 10 | 45.6% ± 5.1 | 66.7% ± 0.0 | 50.0% ± 0.0 | 26.7% ± 0.0 | 1.48 s / 2.25 s |
 | [005_expand_k10](results/005_expand_k10.json) | expand (full pages, max 5) | 1000 / 200 overlap | 10 | 54.4% ± 5.1 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 0.0 | 1.55 s / 4.41 s* |
+| [006_expand_k10_p8](results/006_expand_k10_p8.json) | expand (full pages, max 8) | 1000 / 200 overlap | 10 | 56.7% ± 3.3 | 63.3% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 3.3 | 1.57 s / 4.23 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`.
@@ -123,6 +124,12 @@ fixes split passages, but the 5-page cap drops 3 gold pages that ranked 6th or 7
 falls to 53.3%. Context is about 15,200 characters per question. \*The p95 is a cold start: the
 first question per filing parses its PDF; warm runs have a p95 of 2.3–2.9 s. See
 [the write-up](docs/notes/2026-11-24-page-expansion.md).
+
+**006 (expand, max 8 pages):** raising the cap recovers the three capped gold pages: page hit
+back to 63.3% and evidence hit 63.3% (+2 questions over 005), the best so far. Accuracy 56.7%
+(+2.3, within noise). Context rises 47%, to about 22,500 characters. Accuracy now trails
+evidence hit, a first sign that more context starts to distract generation. \*Cold-start p95
+again. 005 is cheaper, 006 finds more evidence; the re-ranker will decide between them.
 
 ## Roadmap
 

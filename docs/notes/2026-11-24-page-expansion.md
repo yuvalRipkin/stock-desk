@@ -80,7 +80,39 @@ About 15,200 characters of context per question, versus at most about 10,000 for
 5,000 for the baseline, so the answering model's input is roughly 1.5× 002's and 3× the
 baseline's. The judge does not see the context, so its cost is unchanged.
 
+## Experiment 006: 8 pages
+
+Same retriever with `MAX_PAGES`=8 ([results](../../results/006_expand_k10_p8.json)):
+
+| | 005 (5 pages) | 006 (8 pages) |
+|---|---|---|
+| Accuracy | 54.4% ± 5.1 | 56.7% ± 3.3 |
+| Page hit | 53.3% | 63.3% |
+| Evidence hit | 56.7% | 63.3% |
+| Refusal | 20.0% | 20.0% ± 3.3 |
+| Distinct pages | 5.0 | 7.6 |
+| Context per question | ~15,200 chars | ~22,500 chars (+47%) |
+| Latency p50 / p95 | 1.55 s / 4.41 s | 1.57 s / 4.23 s (cold start again) |
+
+- **The cap was the page-hit problem.** All three capped questions (00476, 01009, 01148) get
+  their gold page back, and page hit returns to 002's 63.3%. Evidence hit gains 2 questions
+  (00476, 01009) and loses none.
+- **Accuracy +2.3 points, within noise.**
+- **00678 recovered (0/3 to 3/3).** Not because of the cap: its gold page was present in 005 as
+  well (see above). With more pages the model gave the gross-profit answer instead of hedging.
+  One question, so this is weak evidence either way.
+- **Evidence hit now exceeds accuracy** (63.3% vs 56.7%), the first time the gap opens. With
+  more context, generation starts to fail on questions whose evidence is present. The clearest
+  case is **01328**: evidence hit in both runs, but 3/3 in 005 and 1/3 in 006, likely
+  distraction. **00723** also fell (2/3 to 0/3), but it has no evidence hit in either run, so it
+  is not evidence of distraction.
+- **Cost:** 47% more context for +2 evidence questions.
+
+**Decision deferred.** 005 is the cost-effective setting, 006 finds more evidence. A re-ranker
+should decide: if it can put the gold page in the top 5, the 5-page budget is enough.
+
 ## Next
 
-- Raise `MAX_PAGES` (e.g. 8) to recover the three capped gold pages, and measure the context cost.
+- ~~Raise `MAX_PAGES` (e.g. 8)~~: done in 006, above.
+- Add a re-ranker so the best pages fit in a small page budget.
 - Warm the page cache before timing, so p95 reflects steady state.
