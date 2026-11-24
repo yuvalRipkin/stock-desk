@@ -92,6 +92,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [002_k10](results/002_k10.json) | naive | 1000 / 200 overlap | 10 | 50.0% ± 3.3 | 63.3% ± 0.0 | 50.0% ± 0.0 | 21.1% ± 1.9 | 1.43 s / 2.39 s |
 | [003_dedup_k5](results/003_dedup_k5.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 5 | 33.3% ± 3.3 | 53.3% ± 0.0 | 40.0% ± 0.0 | 37.8% ± 3.8 | 1.33 s / 2.26 s |
 | [004_dedup_k10](results/004_dedup_k10.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 10 | 45.6% ± 5.1 | 66.7% ± 0.0 | 50.0% ± 0.0 | 26.7% ± 0.0 | 1.48 s / 2.25 s |
+| [005_expand_k10](results/005_expand_k10.json) | expand (full pages, max 5) | 1000 / 200 overlap | 10 | 54.4% ± 5.1 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 0.0 | 1.55 s / 4.41 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`.
@@ -115,6 +116,13 @@ dedup dropped the second chunk of their gold page. See
 
 **004 (dedup, k=10):** confirms 003 at k=10: more distinct pages (10 vs 8.1), no extra evidence.
 Evidence hit stays at 50%, and accuracy (45.6%) is within noise of 002's 50.0%.
+
+**005 (expand, k=10, max 5 pages):** the best evidence hit so far (56.7%, +2 questions over
+002), and accuracy 54.4%, though that +4.4 points over 002 is within noise. Sending whole pages
+fixes split passages, but the 5-page cap drops 3 gold pages that ranked 6th or 7th, so page hit
+falls to 53.3%. Context is about 15,200 characters per question. \*The p95 is a cold start: the
+first question per filing parses its PDF; warm runs have a p95 of 2.3–2.9 s. See
+[the write-up](docs/notes/2026-11-24-page-expansion.md).
 
 ## Roadmap
 
