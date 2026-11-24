@@ -21,7 +21,7 @@ Requires Python 3.12, [uv](https://docs.astral.sh/uv/), Docker and an OpenAI API
 ```bash
 git clone <this repo> stock-desk && cd stock-desk
 cp .env.example .env   # set OPENAI_API_KEY; LLM_MODEL defaults to gpt-5.4-mini
-make install           # uv sync
+make install           # uv sync + pre-commit hooks (ruff check, ruff format)
 make db-up             # Postgres + pgvector in Docker, waits until healthy
 make fetch             # FinanceBench questions + the 5 PDFs in data_manifest.txt, into data/
 make ingest            # chunk, embed and store the PDFs (calls the OpenAI embeddings API)

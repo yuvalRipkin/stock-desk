@@ -2,6 +2,7 @@
 
 install:
 	uv sync
+	uv run pre-commit install
 
 db-up:
 	docker compose up -d --wait
