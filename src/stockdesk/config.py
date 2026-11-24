@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     retrieval_k: int = 5
     retriever: Literal["naive", "expand"] = "naive"
     max_pages: int = Field(default=5, ge=1)  # expand: full pages sent to the LLM
+    exclude_exhibits: bool = False  # skip pages from the first attached exhibit on
 
     def experiment_config(self) -> dict[str, object]:
         """The settings that define an experiment, safe to write into results files."""

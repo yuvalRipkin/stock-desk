@@ -4,6 +4,7 @@ import pytest
 from langchain_core.documents import Document
 
 from stockdesk.retrieval import expand, get_retriever, naive
+from stockdesk.retrieval import pages as pages_module
 from stockdesk.retrieval.pages import dedup_by_page
 
 
@@ -72,10 +73,10 @@ def mock_expand(monkeypatch: pytest.MonkeyPatch):
         return [chunk(p, text, doc_name) for p, text in FULL_PAGES[doc_name].items()]
 
     monkeypatch.setattr(expand.naive, "retrieve", lambda q, doc, k: hits[:k])
-    monkeypatch.setattr(expand, "load_pdf", fake_load_pdf)
-    expand.page_texts.cache_clear()
+    monkeypatch.setattr(pages_module, "load_pdf", fake_load_pdf)
+    pages_module.page_texts.cache_clear()
     yield hits, pdf_reads
-    expand.page_texts.cache_clear()
+    pages_module.page_texts.cache_clear()
 
 
 def set_max_pages(monkeypatch: pytest.MonkeyPatch, n: int) -> None:

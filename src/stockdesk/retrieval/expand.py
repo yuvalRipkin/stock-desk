@@ -5,24 +5,11 @@ Document per page holding that page's full text, so a passage the splitter cut a
 reaches the model intact.
 """
 
-from functools import lru_cache
-
 from langchain_core.documents import Document
 
 from stockdesk.config import get_settings
-from stockdesk.ingestion.ingestion import load_pdf
 from stockdesk.retrieval import naive
-from stockdesk.retrieval.pages import dedup_by_page
-
-
-@lru_cache(maxsize=32)  # one entry per filing
-def page_texts(doc_name: str) -> dict[int, str]:
-    """Full text of each non-empty page of a filing, keyed by zero-based page number.
-
-    Read from the PDF and cached per process. Production would store page text in the DB
-    (e.g. a pages table written at ingestion) instead of re-reading PDFs.
-    """
-    return {d.metadata["page"]: d.page_content for d in load_pdf(doc_name)}
+from stockdesk.retrieval.pages import dedup_by_page, page_texts
 
 
 def retrieve(question: str, doc_name: str | None = None, k: int | None = None) -> list[Document]:
