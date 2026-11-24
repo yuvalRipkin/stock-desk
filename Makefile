@@ -1,4 +1,4 @@
-.PHONY: install db-up db-down fetch ingest ask lint format test
+.PHONY: install db-up db-down fetch ingest ask eval lint format test
 
 install:
 	uv sync
@@ -23,6 +23,14 @@ ifndef Q
 	$(error usage: make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?")
 endif
 	uv run python -m stockdesk.ask --doc $(DOC) "$(Q)"
+
+RUNS ?= 3
+
+eval:
+ifndef NAME
+	$(error usage: make eval NAME=001_naive_1000 [RUNS=3])
+endif
+	uv run python -m stockdesk.evals.runner --name $(NAME) --runs $(RUNS)
 
 lint:
 	uv run ruff check .
