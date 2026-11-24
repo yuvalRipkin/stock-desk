@@ -45,6 +45,7 @@ class DownloadError(Exception):
 
 
 def is_valid_pdf(path: Path) -> bool:
+    """True if the file starts with the PDF magic bytes."""
     try:
         with path.open("rb") as f:
             return f.read(4) == b"%PDF"
@@ -53,6 +54,7 @@ def is_valid_pdf(path: Path) -> bool:
 
 
 def is_valid_jsonl(path: Path) -> bool:
+    """True if the file's first line parses as JSON."""
     try:
         with path.open("r", encoding="utf-8") as f:
             json.loads(f.readline())
@@ -117,6 +119,7 @@ def download(
 
 
 def build_manifest(questions_path: Path, top: int, out: Path) -> list[str]:
+    """Write the `top` doc_names with the most questions to `out` and return them."""
     counts: Counter[str] = Counter()
     with questions_path.open("r", encoding="utf-8") as f:
         for line in f:
@@ -139,6 +142,7 @@ def build_manifest(questions_path: Path, top: int, out: Path) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Fetch the question files and manifest PDFs; return 1 if any download failed."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--top",

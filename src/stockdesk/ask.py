@@ -11,6 +11,7 @@ from stockdesk.rag import RagError, answer
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Answer one question from the command line; return 1 on a setup error."""
     parser = argparse.ArgumentParser(description="Ask a question about one SEC filing.")
     parser.add_argument("question", help="the question to ask")
     parser.add_argument("--doc", required=True, help="doc_name, e.g. AMD_2022_10K")

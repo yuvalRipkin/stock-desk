@@ -12,6 +12,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """All settings; each field is read from the env var of the same name in upper case."""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Infrastructure / secrets
@@ -38,4 +40,5 @@ class Settings(BaseSettings):
 
 @cache
 def get_settings() -> Settings:
+    """Return the settings, loaded once per process."""
     return Settings()

@@ -13,6 +13,7 @@ from stockdesk.store import get_store
 
 
 def load_pdf(doc_name: str) -> list[Document]:
+    """Return one Document per non-empty page of the filing's PDF, with zero-based page numbers."""
     reader = PdfReader(PDF_DIR / f"{doc_name}.pdf")
     docs = []
     for i, page in enumerate(reader.pages):
@@ -23,6 +24,7 @@ def load_pdf(doc_name: str) -> list[Document]:
 
 
 def split(docs: list[Document]) -> list[Document]:
+    """Split pages into chunks of CHUNK_SIZE characters with CHUNK_OVERLAP, keeping metadata."""
     settings = get_settings()
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap
@@ -31,6 +33,7 @@ def split(docs: list[Document]) -> list[Document]:
 
 
 def chunk_ids(chunks: list[Document]) -> list[str]:
+    """Stable ids (uuid5 of doc_name:page:index), so re-ingesting upserts instead of duplicating."""
     counters: defaultdict[tuple[str, int], int] = defaultdict(int)
     ids = []
     for c in chunks:
@@ -42,6 +45,7 @@ def chunk_ids(chunks: list[Document]) -> list[str]:
 
 
 def main() -> None:
+    """Ingest every filing in data_manifest.txt into the configured vector store table."""
     store = get_store()
     for name in read_manifest():
         chunks = split(load_pdf(name))
