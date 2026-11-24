@@ -1,1 +1,1 @@
-"""Retrieval: BM25 + vector hybrid search and re-ranking."""
+"""Retrieval: find the chunks of a filing that are relevant to a question."""

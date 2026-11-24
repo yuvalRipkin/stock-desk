@@ -1,1 +1,1 @@
-"""Evals: FinanceBench eval runner and LLM judge."""
+"""Evals: FinanceBench dataset loading and metrics."""

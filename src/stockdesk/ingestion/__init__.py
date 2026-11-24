@@ -1,1 +1,1 @@
-"""Ingestion: FinanceBench PDF loading, SEC EDGAR fetching, and document chunking."""
+"""Ingestion: load FinanceBench PDFs, split them into chunks, and write them to the vector store."""
