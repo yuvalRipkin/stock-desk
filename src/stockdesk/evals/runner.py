@@ -22,7 +22,7 @@ from stockdesk.data import ROOT
 from stockdesk.evals.dataset import EvalCase, load_cases
 from stockdesk.evals.judge import judge
 from stockdesk.evals.metrics import distinct_pages, evidence_hit, is_refusal, page_hit
-from stockdesk.rag import answer
+from stockdesk.rag import answer, build_context
 
 RESULTS_DIR = ROOT / "results"
 SUMMARY_METRICS = [
@@ -31,6 +31,7 @@ SUMMARY_METRICS = [
     "evidence_hit_rate",
     "refusal_rate",
     "avg_distinct_pages",
+    "avg_context_chars",
     "latency_p50_ms",
     "latency_p95_ms",
     "error_count",
@@ -51,6 +52,7 @@ class QuestionRecord:
     evidence_hit: bool
     refusal: bool
     distinct_pages: int
+    context_chars: int  # characters of retrieved context sent to the LLM
     latency_ms: float | None  # latency of rag.answer() only
     error: str | None
 
@@ -72,8 +74,9 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
     """Summary metrics for one run.
 
     Rates (accuracy, hit rates, refusal rate) are over ALL questions, so an errored question
-    counts as incorrect and as a miss. avg_distinct_pages and latency percentiles are over
-    questions that got an answer, since errored ones have no retrieval or latency.
+    counts as incorrect and as a miss. Averages (distinct pages, context chars) and latency
+    percentiles are over questions that got an answer, since errored ones have no retrieval
+    or latency.
     """
     n = len(records)
     ok = [r for r in records if r.error is None]
@@ -89,6 +92,7 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
         "evidence_hit_rate": rate("evidence_hit"),
         "refusal_rate": rate("refusal"),
         "avg_distinct_pages": statistics.mean(r.distinct_pages for r in ok) if ok else None,
+        "avg_context_chars": statistics.mean(r.context_chars for r in ok) if ok else None,
         "latency_p50_ms": percentile(latencies, 50),
         "latency_p95_ms": percentile(latencies, 95),
         "error_count": n - len(ok),
@@ -128,6 +132,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
         evidence_hit=False,
         refusal=False,
         distinct_pages=0,
+        context_chars=0,
         latency_ms=None,
         error=None,
     )
@@ -146,6 +151,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
     record.evidence_hit = evidence_hit([d.page_content for d in result.docs], case.evidence_texts)
     record.refusal = is_refusal(result.answer)
     record.distinct_pages = distinct_pages(pages)
+    record.context_chars = len(build_context(result.docs))
 
     try:
         verdict = judge(case.question, case.gold_answer, result.answer)

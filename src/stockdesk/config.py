@@ -7,7 +7,7 @@ run's config can be saved alongside its results with `get_settings().experiment_
 from functools import cache
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
     retrieval_k: int = 5
-    retriever: Literal["naive"] = "naive"
+    retriever: Literal["naive", "expand"] = "naive"
+    max_pages: int = Field(default=5, ge=1)  # expand: full pages sent to the LLM
 
     def experiment_config(self) -> dict[str, object]:
         """The settings that define an experiment, safe to write into results files."""

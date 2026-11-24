@@ -19,6 +19,7 @@ def record(**overrides) -> QuestionRecord:
         evidence_hit=True,
         refusal=False,
         distinct_pages=2,
+        context_chars=1000,
         latency_ms=100.0,
         error=None,
     )
@@ -35,6 +36,7 @@ def error_record() -> QuestionRecord:
         page_hit=False,
         evidence_hit=False,
         distinct_pages=0,
+        context_chars=0,
         latency_ms=None,
         error="answer: RagError: boom",
     )
@@ -58,7 +60,7 @@ def test_percentile_single_and_empty():
 
 def test_summarize_run_rates_and_latency():
     records = [
-        record(latency_ms=100.0),
+        record(latency_ms=100.0, context_chars=2000),
         record(correct=False, page_hit=False, latency_ms=200.0, distinct_pages=4),
         record(correct=False, evidence_hit=False, refusal=True, latency_ms=300.0, distinct_pages=3),
         record(latency_ms=400.0, distinct_pages=3),
@@ -71,6 +73,7 @@ def test_summarize_run_rates_and_latency():
     assert s["evidence_hit_rate"] == 0.75
     assert s["refusal_rate"] == 0.25
     assert s["avg_distinct_pages"] == 3.0
+    assert s["avg_context_chars"] == 1250
     assert s["latency_p50_ms"] == 250.0
     assert s["latency_p95_ms"] == pytest.approx(385.0)
     assert s["error_count"] == 0
@@ -83,6 +86,7 @@ def test_summarize_run_errors_count_as_wrong_but_skip_latency_and_pages():
     assert s["page_hit_rate"] == 0.5
     assert s["error_count"] == 1
     assert s["avg_distinct_pages"] == 4.0
+    assert s["avg_context_chars"] == 1000
     assert s["latency_p50_ms"] == 100.0
 
 
@@ -92,6 +96,7 @@ def test_summarize_run_all_errors():
     assert s["accuracy"] == 0.0
     assert s["error_count"] == 2
     assert s["avg_distinct_pages"] is None
+    assert s["avg_context_chars"] is None
     assert s["latency_p50_ms"] is None
 
 
