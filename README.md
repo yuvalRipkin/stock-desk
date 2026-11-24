@@ -10,8 +10,9 @@ What exists today:
   with pgvector. A question is answered by vector search over one filing (top 5 chunks) and an
   LLM prompted to answer only from those excerpts, cite page numbers, or reply
   "Not found in the filing."
-- **FinanceBench eval (in progress).** A loader for the 30 FinanceBench questions about those
-  filings, plus retrieval and answer metrics. The eval runner and LLM judge are not written yet.
+- **FinanceBench eval.** The 30 FinanceBench questions about those filings are answered by the
+  same code the CLI runs, scored for retrieval (did it find the gold evidence page and text?),
+  and graded by an LLM judge against the gold answer. See [Results](#results).
 
 ## Quickstart
 
@@ -61,14 +62,45 @@ uv run python scripts/fetch_data.py --top 10   # rebuild the manifest from the 1
 uv run python scripts/fetch_data.py --force    # re-download everything
 ```
 
+## Evaluation
+
+```bash
+make eval NAME=001_naive_1000          # 3 runs by default
+make eval NAME=002_my_change RUNS=1    # a quicker single run
+```
+
+Each run answers all 30 questions with `stockdesk.rag.answer`, then:
+
+- **Accuracy:** an LLM judge (`JUDGE_MODEL`, default `gpt-5.4`, stronger than the answering
+  model) compares the answer to the gold answer. Numbers may differ by rounding (up to 1%),
+  every part of a multi-part question must be right, and a refusal is always wrong.
+- **Page hit / evidence hit:** whether any gold evidence page is among the retrieved pages, and
+  whether any gold evidence text fuzzy-matches a retrieved chunk.
+- **Refusal rate:** how often the answer is "Not found in the filing."
+
+Results go to `results/<NAME>.json` with the full config, the git commit, a dirty flag, every
+answer and the judge's reason. The runner refuses to overwrite an existing file unless you pass
+`--force` (`uv run python -m stockdesk.evals.runner --name ... --force`).
+
+## Results
+
+30 FinanceBench questions over 5 filings, 3 runs. Values are mean ± std across runs.
+
+| Experiment | Chunking | k | Accuracy | Page hit | Evidence hit | Refusal | Latency p50 / p95 |
+|---|---|---|---|---|---|---|---|
+| [001_naive_1000](results/001_naive_1000.json) | 1000 / 200 overlap | 5 | 38.9% ± 5.1 | 50.0% ± 0.0 | 40.0% ± 0.0 | 34.4% ± 5.1 | 1.38 s / 2.31 s |
+
+All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
+by `gpt-5.4`.
+
 ## Roadmap
 
 - **Phase 1: Ingestion + baseline RAG** (done)
-- **Phase 2: FinanceBench evals** (in progress: dataset loader and metrics done; runner next)
+- **Phase 2: FinanceBench evals** (done: runner, metrics, LLM judge, naive baseline)
 - **Phase 3: Hybrid search + re-ranking** (planned): BM25 + vector retrieval
 - **Phase 4: LangGraph agent + tools + routing** (planned): including price data and technical
   indicators
-- **Phase 5: LLM judge + CI regression subset** (planned)
+- **Phase 5: CI regression subset** (planned)
 - **Phase 6: Tracing, caching, cost/latency** (planned): OpenTelemetry / Arize Phoenix
 
 ## License
