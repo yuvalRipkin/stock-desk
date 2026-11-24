@@ -93,6 +93,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [003_dedup_k5](results/003_dedup_k5.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 5 | 33.3% ± 3.3 | 53.3% ± 0.0 | 40.0% ± 0.0 | 37.8% ± 3.8 | 1.33 s / 2.26 s |
 | [004_dedup_k10](results/004_dedup_k10.json) | dedup (1 chunk/page) | 1000 / 200 overlap | 10 | 45.6% ± 5.1 | 66.7% ± 0.0 | 50.0% ± 0.0 | 26.7% ± 0.0 | 1.48 s / 2.25 s |
 | [005_expand_k10](results/005_expand_k10.json) | expand (full pages, max 5) | 1000 / 200 overlap | 10 | 54.4% ± 5.1 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 0.0 | 1.55 s / 4.41 s* |
+| [005b_expand_k10_repeat](results/005b_expand_k10_repeat.json) | repeat of 005 (same code and config) | 1000 / 200 overlap | 10 | 47.8% ± 1.9 | 53.3% ± 0.0 | 56.7% ± 0.0 | 23.3% ± 3.3 | 1.50 s / 4.59 s* |
 | [006_expand_k10_p8](results/006_expand_k10_p8.json) | expand (full pages, max 8) | 1000 / 200 overlap | 10 | 56.7% ± 3.3 | 63.3% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 3.3 | 1.57 s / 4.23 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
@@ -128,8 +129,15 @@ first question per filing parses its PDF; warm runs have a p95 of 2.3–2.9 s. S
 **006 (expand, max 8 pages):** raising the cap recovers the three capped gold pages: page hit
 back to 63.3% and evidence hit 63.3% (+2 questions over 005), the best so far. Accuracy 56.7%
 (+2.3, within noise). Context rises 47%, to about 22,500 characters. Accuracy now trails
-evidence hit, a first sign that more context starts to distract generation. \*Cold-start p95
-again. 005 is cheaper, 006 finds more evidence; the re-ranker will decide between them.
+evidence hit, but the per-question drops behind that gap also occur in 005b (below), so it is
+not yet evidence of distraction. \*Cold-start p95 again. 005 is cheaper, 006 finds more evidence; the re-ranker will decide between them.
+
+**005b (repeat of 005), and the noise floor:** an accidental rerun of 005 with the same code
+and config (88 of 90 records retrieved identical pages; page hit, evidence hit and context are
+the same). Accuracy still moved 6.6 points, from 54.4% to 47.8%. So between experiments,
+accuracy differences under about ±7 points (2 questions) are noise, wider than the per-run std
+suggests. Retrieval changes are judged by evidence hit, which is deterministic; accuracy only
+confirms large gains. See [the write-up](docs/notes/2026-11-24-noise-floor.md).
 
 ## Roadmap
 

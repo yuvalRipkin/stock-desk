@@ -101,11 +101,12 @@ Same retriever with `MAX_PAGES`=8 ([results](../../results/006_expand_k10_p8.jso
 - **00678 recovered (0/3 to 3/3).** Not because of the cap: its gold page was present in 005 as
   well (see above). With more pages the model gave the gross-profit answer instead of hedging.
   One question, so this is weak evidence either way.
-- **Evidence hit now exceeds accuracy** (63.3% vs 56.7%), the first time the gap opens. With
-  more context, generation starts to fail on questions whose evidence is present. The clearest
-  case is **01328**: evidence hit in both runs, but 3/3 in 005 and 1/3 in 006, likely
-  distraction. **00723** also fell (2/3 to 0/3), but it has no evidence hit in either run, so it
-  is not evidence of distraction.
+- **Evidence hit now exceeds accuracy** (63.3% vs 56.7%), the first time the gap opens. More
+  context could be distracting generation, but the per-question evidence does not hold up:
+  **01328** fell 3/3 to 1/3 in 006, and **00723** 2/3 to 0/3, yet in an exact repeat of 005
+  (005b, [noise-floor note](2026-11-24-noise-floor.md)) the same two questions fell to 0/3 with
+  identical retrieval. Their drops are within noise. Distraction remains a hypothesis to test,
+  not a finding.
 - **Cost:** 47% more context for +2 evidence questions.
 
 **Decision deferred.** 005 is the cost-effective setting, 006 finds more evidence. A re-ranker
