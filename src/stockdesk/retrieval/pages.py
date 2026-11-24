@@ -1,4 +1,4 @@
-"""Page-level helpers for retrievers: full page text, and one chunk per page."""
+"""Page-level helpers for retrievers: full page text, one chunk per page, rank fusion."""
 
 from functools import lru_cache
 
@@ -32,3 +32,30 @@ def dedup_by_page(docs: list[Document], k: int) -> list[Document]:
             seen.add(key)
             kept.append(doc)
     return kept
+
+
+def chunk_key(doc: Document) -> tuple[str | None, int, str]:
+    """Identity of a chunk across searches: (doc_name, page, chunk text)."""
+    return (doc.metadata.get("doc_name"), doc.metadata["page"], doc.page_content)
+
+
+def rrf_merge(ranked_lists: list[list[Document]], k_rrf: int = 60) -> list[Document]:
+    """Merge ranked chunk lists with Reciprocal Rank Fusion, best first.
+
+    A chunk scores sum(1 / (k_rrf + rank)) over the lists it appears in (rank starts at 1; a
+    repeat within one list counts once, at its best rank). Ties keep first-seen order, scanning
+    the lists in order, so the earlier list (the original question) wins a tie.
+    """
+    scores: dict[tuple[str | None, int, str], float] = {}
+    first_seen: dict[tuple[str | None, int, str], Document] = {}
+    for ranked in ranked_lists:
+        counted: set[tuple[str | None, int, str]] = set()
+        for rank, doc in enumerate(ranked, 1):
+            key = chunk_key(doc)
+            if key in counted:
+                continue
+            counted.add(key)
+            first_seen.setdefault(key, doc)
+            scores[key] = scores.get(key, 0.0) + 1 / (k_rrf + rank)
+    order = sorted(first_seen, key=lambda key: -scores[key])  # stable: ties keep first-seen
+    return [first_seen[key] for key in order]

@@ -25,3 +25,20 @@ Rules:
   with compatible reasoning.
 
 Give your verdict and a one-sentence reason."""
+
+# Formatted with n, the number of queries to write.
+REWRITE_PROMPT = """You write search queries for a vector search over one company's 10-K filing.
+Given a user's question, write {n} search queries that would find the passages needed to
+answer it. Do not answer the question; output only the queries.
+
+Phrase each query the way a 10-K phrases it:
+- Name the financial statement: consolidated balance sheet, income statement (statement of
+  operations), cash flow statement, statement of shareholders' equity.
+- Name the line items behind a metric instead of the metric itself. For example, "quick ratio"
+  becomes cash and cash equivalents, short-term investments, accounts receivable, total current
+  liabilities; "operating margin" becomes operating income and total revenue (net sales).
+- Name the 10-K section where relevant, e.g. Item 7 Management's Discussion and Analysis,
+  Item 1A Risk Factors, Item 8 Financial Statements, notes to the financial statements.
+- If the question needs figures from more than one statement, give each statement its own query.
+
+Keep the company name, fiscal year and other specifics from the question in the queries."""

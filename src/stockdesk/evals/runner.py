@@ -61,6 +61,7 @@ class QuestionRecord:
     context_chars: int | None  # characters of context sent to the LLM; None in pre-005 files
     latency_ms: float | None  # latency of rag.answer() only
     error: str | None
+    queries: list[str] | None = None  # searched: the question, then any rewrites; None pre-008
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -158,6 +159,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
 
     pages = [d.metadata["page"] for d in result.docs]
     record.answer = result.answer
+    record.queries = result.queries
     record.retrieved_pages = pages
     record.page_hit = page_hit(pages, case.evidence_pages)
     record.evidence_hit = evidence_hit([d.page_content for d in result.docs], case.evidence_texts)
@@ -217,6 +219,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    config = get_settings().experiment_config()
+    print(f"config: {json.dumps(config, indent=2)}")
     started = datetime.now(UTC)
     git = git_state()
     cases = load_cases()
@@ -238,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
     results = {
         "name": args.name,
         "timestamp": started.isoformat(),
-        "config": get_settings().experiment_config(),
+        "config": config,
         "metrics_version": METRICS_VERSION,
         "git": git,
         "n_cases": len(cases),

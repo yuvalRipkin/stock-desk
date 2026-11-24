@@ -22,6 +22,7 @@ class RagError(RuntimeError):
 class RagResult:
     answer: str
     docs: list[Document]
+    queries: list[str]  # searched: the question, then any rewrites
 
 
 def build_context(docs: list[Document]) -> str:
@@ -34,7 +35,8 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
         raise RagError("LLM_MODEL is not set. Add LLM_MODEL=<model name> to .env.")
 
     retrieve = get_retriever(settings.retriever)
-    docs = retrieve(question, doc_name, k if k is not None else settings.retrieval_k)
+    retrieval = retrieve(question, doc_name, k if k is not None else settings.retrieval_k)
+    docs = retrieval.docs
     if not docs:
         raise RagError(f"no chunks found for doc '{doc_name}'. Has it been ingested?")
 
@@ -45,4 +47,4 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
             HumanMessage(f"Context:\n{build_context(docs)}\n\nQuestion: {question}"),
         ]
     )
-    return RagResult(answer=response.text, docs=docs)
+    return RagResult(answer=response.text, docs=docs, queries=retrieval.queries)

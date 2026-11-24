@@ -7,7 +7,7 @@ run's config can be saved alongside its results with `get_settings().experiment_
 from functools import cache
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,17 @@ class Settings(BaseSettings):
     retriever: Literal["naive", "expand"] = "naive"
     max_pages: int = Field(default=5, ge=1)  # expand: full pages sent to the LLM
     exclude_exhibits: bool = False  # skip pages from the first attached exhibit on
+    query_rewrite: Literal["none", "multi"] = "none"  # multi: LLM rewrites, fused with RRF
+    n_rewrites: int = Field(default=3, ge=1)  # multi: rewritten queries per question
+    rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries
+
+    @model_validator(mode="after")
+    def check_rewrite_retriever(self) -> "Settings":
+        if self.query_rewrite == "multi" and self.retriever != "expand":
+            raise ValueError(
+                f"QUERY_REWRITE=multi requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
+            )
+        return self
 
     def experiment_config(self) -> dict[str, object]:
         """The settings that define an experiment, safe to write into results files."""

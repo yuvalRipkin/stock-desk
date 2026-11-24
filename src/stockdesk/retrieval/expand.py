@@ -3,24 +3,43 @@
 Searches for k chunks, keeps the first MAX_PAGES distinct pages in rank order, and returns one
 Document per page holding that page's full text, so a passage the splitter cut across chunks
 reaches the model intact.
+
+With QUERY_REWRITE=multi, it searches k chunks for the question and for each LLM rewrite of it,
+and merges the ranked lists with Reciprocal Rank Fusion before picking pages.
 """
 
 from langchain_core.documents import Document
 
 from stockdesk.config import get_settings
-from stockdesk.retrieval import naive
-from stockdesk.retrieval.pages import dedup_by_page, page_texts
+from stockdesk.retrieval import Retrieval, naive, rewrite
+from stockdesk.retrieval.pages import dedup_by_page, page_texts, rrf_merge
 
 
-def retrieve(question: str, doc_name: str | None = None, k: int | None = None) -> list[Document]:
-    """Return the full text of up to MAX_PAGES pages whose chunks rank in the top k."""
+def search_queries(question: str) -> list[str]:
+    """The queries to search: the question, then its rewrites if QUERY_REWRITE=multi."""
+    if get_settings().query_rewrite == "multi":
+        return [question, *rewrite.rewrite_queries(question)]
+    return [question]
+
+
+def search(question: str, doc_name: str | None = None, k: int | None = None) -> Retrieval:
+    """Full text of up to MAX_PAGES pages whose chunks rank best, and the queries searched."""
     settings = get_settings()
     if k is None:
         k = settings.retrieval_k
-    hits = naive.retrieve(question, doc_name, k)
+    queries = search_queries(question)
+    if len(queries) == 1:
+        hits = naive.retrieve(question, doc_name, k)
+    else:
+        hits = rrf_merge([naive.retrieve(q, doc_name, k) for q in queries])
     pages = []
     for hit in dedup_by_page(hits, settings.max_pages):
         name, page = hit.metadata["doc_name"], hit.metadata["page"]
         text = page_texts(name).get(page, hit.page_content)
         pages.append(Document(page_content=text, metadata={"doc_name": name, "page": page}))
-    return pages
+    return Retrieval(docs=pages, queries=queries)
+
+
+def retrieve(question: str, doc_name: str | None = None, k: int | None = None) -> list[Document]:
+    """The pages from search(), without the queries."""
+    return search(question, doc_name, k).docs

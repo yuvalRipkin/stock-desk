@@ -4,6 +4,7 @@ from langchain_core.documents import Document
 
 from stockdesk.config import get_settings
 from stockdesk.data import read_manifest
+from stockdesk.retrieval import Retrieval
 from stockdesk.retrieval.exhibits import exhibit_cutoff
 from stockdesk.store import get_store
 
@@ -31,3 +32,8 @@ def retrieve(question: str, doc_name: str | None = None, k: int | None = None) -
     if k is None:
         k = get_settings().retrieval_k
     return get_store().similarity_search(question, k=k, filter=search_filter(doc_name))
+
+
+def search(question: str, doc_name: str | None = None, k: int | None = None) -> Retrieval:
+    """retrieve(), with the question as the only query searched."""
+    return Retrieval(docs=retrieve(question, doc_name, k), queries=[question])
