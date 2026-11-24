@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     embedding_model: str = "text-embedding-3-small"
     embedding_dim: int = 1536  # must match embedding_model
     llm_model: str | None = None
+    judge_model: str = "gpt-5.4"  # grades answers; stronger than llm_model on purpose
     chunk_size: int = 1000
     chunk_overlap: int = 200
     retrieval_k: int = 5
