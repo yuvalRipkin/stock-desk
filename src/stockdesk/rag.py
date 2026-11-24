@@ -11,7 +11,7 @@ from langchain_openai import ChatOpenAI
 
 from stockdesk.config import get_settings
 from stockdesk.prompts import PROMPT
-from stockdesk.retrieval.naive import retrieve
+from stockdesk.retrieval import get_retriever
 
 
 class RagError(RuntimeError):
@@ -33,6 +33,7 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
     if not settings.llm_model:
         raise RagError("LLM_MODEL is not set. Add LLM_MODEL=<model name> to .env.")
 
+    retrieve = get_retriever(settings.retriever)
     docs = retrieve(question, doc_name, k if k is not None else settings.retrieval_k)
     if not docs:
         raise RagError(f"no chunks found for doc '{doc_name}'. Has it been ingested?")

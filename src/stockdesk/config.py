@@ -5,8 +5,9 @@ run's config can be saved alongside its results with `get_settings().experiment_
 """
 
 from functools import cache
+from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,6 +28,8 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
     retrieval_k: int = 5
+    retriever: Literal["naive", "dedup"] = "naive"
+    fetch_multiplier: int = Field(default=4, ge=1)  # dedup: candidates = k * this
 
     def experiment_config(self) -> dict[str, object]:
         """The settings that define an experiment, safe to write into results files."""
