@@ -89,9 +89,20 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | Experiment | Chunking | k | Accuracy | Page hit | Evidence hit | Refusal | Latency p50 / p95 |
 |---|---|---|---|---|---|---|---|
 | [001_naive_1000](results/001_naive_1000.json) | 1000 / 200 overlap | 5 | 38.9% ± 5.1 | 50.0% ± 0.0 | 40.0% ± 0.0 | 34.4% ± 5.1 | 1.38 s / 2.31 s |
+| [002_k10](results/002_k10.json) | 1000 / 200 overlap | 10 | 50.0% ± 3.3 | 63.3% ± 0.0 | 50.0% ± 0.0 | 21.1% ± 1.9 | 1.43 s / 2.39 s |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`.
+
+**002 (k=10):** retrieving 10 chunks instead of 5 finds the gold evidence for 3 more questions
+and lifts accuracy by 11 points, more than twice the baseline's run-to-run spread. Refusals drop
+from 34% to 21%. Retrieval still matters most: with the gold passage retrieved, 64% of answers
+are correct; without it, 35%. Even with the passage, about a third of answers are wrong, so
+generation is a second bottleneck.
+
+**Cost:** k=10 doubles the retrieved context, so the answering model's input tokens per question
+roughly double. Latency barely changes. The embedding call and the judge (which never sees the
+context) cost the same.
 
 ## Roadmap
 
