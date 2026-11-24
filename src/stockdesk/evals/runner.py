@@ -58,7 +58,7 @@ class QuestionRecord:
     evidence_hit: bool
     refusal: bool
     distinct_pages: int
-    context_chars: int  # characters of retrieved context sent to the LLM
+    context_chars: int | None  # characters of context sent to the LLM; None in pre-005 files
     latency_ms: float | None  # latency of rag.answer() only
     error: str | None
 
@@ -74,6 +74,12 @@ def percentile(values: list[float], q: float) -> float | None:
     pos = (len(ordered) - 1) * q / 100
     lo, hi = math.floor(pos), math.ceil(pos)
     return ordered[lo] + (ordered[hi] - ordered[lo]) * (pos - lo)
+
+
+def mean_or_none(values: list[float | int | None]) -> float | None:
+    """Mean of the non-None values, or None if there are none."""
+    present = [v for v in values if v is not None]
+    return statistics.mean(present) if present else None
 
 
 def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None]:
@@ -98,7 +104,7 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
         "evidence_hit_rate": rate("evidence_hit"),
         "refusal_rate": rate("refusal"),
         "avg_distinct_pages": statistics.mean(r.distinct_pages for r in ok) if ok else None,
-        "avg_context_chars": statistics.mean(r.context_chars for r in ok) if ok else None,
+        "avg_context_chars": mean_or_none([r.context_chars for r in ok]),
         "latency_p50_ms": percentile(latencies, 50),
         "latency_p95_ms": percentile(latencies, 95),
         "error_count": n - len(ok),
