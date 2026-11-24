@@ -15,14 +15,34 @@ What exists today:
 
 ## Quickstart
 
-Requires Python 3.12, [uv](https://docs.astral.sh/uv/) and Docker.
+Requires Python 3.12, [uv](https://docs.astral.sh/uv/), Docker and an OpenAI API key.
 
 ```bash
-cp .env.example .env   # then fill in your keys
-make install
-make db-up
+git clone <this repo> stock-desk && cd stock-desk
+cp .env.example .env   # set OPENAI_API_KEY; LLM_MODEL defaults to gpt-5.4-mini
+make install           # uv sync
+make db-up             # Postgres + pgvector in Docker, waits until healthy
+make fetch             # FinanceBench questions + the 5 PDFs in data_manifest.txt, into data/
+make ingest            # chunk, embed and store the PDFs (calls the OpenAI embeddings API)
 make test
 ```
+
+Then ask a question about one filing:
+
+```bash
+make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?"
+```
+
+Expected output (the wording can vary between runs, even at temperature 0):
+
+```text
+Total net revenue in 2022 was $23.601 billion (page 47).
+
+Retrieved pages (AMD_2022_10K): 47, 67, 66, 48, 63
+```
+
+`DOC` is any `doc_name` in `data_manifest.txt`. Pages are zero-based PDF page indexes, the same
+numbering FinanceBench uses for its evidence pages.
 
 ## Data
 
@@ -33,8 +53,10 @@ Files are downloaded into `data/`, which is gitignored. The PDFs to fetch are li
 `data_manifest.txt`. If that file is missing, the script creates it from the documents with the
 most questions.
 
+`make fetch` runs the fetch script with no options. To change what it fetches:
+
 ```bash
-uv run python scripts/fetch_data.py            # fetch what data_manifest.txt lists
+uv run python scripts/fetch_data.py            # fetch what data_manifest.txt lists (= make fetch)
 uv run python scripts/fetch_data.py --top 10   # rebuild the manifest from the 10 most-asked docs
 uv run python scripts/fetch_data.py --force    # re-download everything
 ```
