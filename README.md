@@ -97,6 +97,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [005b_expand_k10_repeat](results/005b_expand_k10_repeat.json) | repeat of 005 (same code and config) | 1000 / 200 overlap | 10 | 48.9% ± 1.9 | 53.3% ± 0.0 | 56.7% ± 0.0 | 20.0% ± 3.3 | 1.50 s / 4.59 s* |
 | [006_expand_k10_p8](results/006_expand_k10_p8.json) | expand (full pages, max 8) | 1000 / 200 overlap | 10 | 56.7% ± 3.3 | 63.3% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 3.3 | 1.57 s / 4.23 s* |
 | [007_expand_p5_noexhibits](results/007_expand_p5_noexhibits.json) | expand (full pages, max 5), exhibits excluded | 1000 / 200 overlap | 10 | 55.6% ± 1.9 | 60.0% ± 0.0 | 63.3% ± 0.0 | 15.6% ± 1.9 | 1.51 s / 4.33 s* |
+| [008_rewrite_multi](results/008_rewrite_multi.json) | 007 + multi-query rewriting (3 rewrites, RRF) | 1000 / 200 overlap | 10 per query | 54.4% ± 13.5 | 63.3% ± 5.8 | 64.4% ± 6.9 | 11.1% ± 5.1 | 4.48 s / 8.41 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`.
@@ -156,6 +157,18 @@ from each filing's first attached exhibit on frees slots that exhibits took: evi
 63.3% (+2 questions over 005, equal to 006) with about 15,500 characters of context, 31% less
 than 006. Accuracy 55.6% is unchanged within the noise floor. The best cost-effective setting
 so far. See [the write-up](docs/notes/2026-11-24-exhibits.md).
+
+**008 (007 + multi-query rewriting):** no measurable gain; adds retrieval variance and 3x
+latency. `gpt-5.4-mini` rewrites each question into 3 queries in 10-K terms (statements, line
+items, sections), and the question plus its rewrites are merged with Reciprocal Rank Fusion.
+Evidence hit 64.4% vs 63.3% is within noise: quick-ratio questions 00222 and 00799 now find
+their balance sheets in every run, but 00563 loses its evidence and three others become flaky.
+The rewrites differ per run, so retrieval is no longer deterministic (5 of 30 questions kept
+the same pages across runs, vs 30 of 30 in 007) and accuracy swings from 40.0% to 66.7% per
+run. The target 01964 is not fixed: same pages as 007, gold page 97 still unranked. Latency
+p50 triples to 4.5 s. \*Run 1's p95 is a cold start; warm runs are 5.4–6.3 s.
+`QUERY_REWRITE` stays `none` by default, and 007 remains the best config. See
+[the write-up](docs/notes/2026-11-24-query-rewriting.md).
 
 ## Roadmap
 
