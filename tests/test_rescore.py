@@ -151,3 +151,13 @@ def test_as_record_ignores_fields_of_removed_features():
     raw = {**record("a", "Customer deposits", refusal=False, correct=True), "rerank_ms": 812.5}
 
     assert as_record(raw) == as_record(record("a", "Customer deposits", False, True))
+
+
+def test_rescore_keeps_earlier_rescore_blocks(results: dict):
+    results["metrics_version"] = METRICS_VERSION - 1
+    results["rescore"] = {"to_metrics_version": METRICS_VERSION - 1}
+
+    out = rescore(results, judge_fn=lambda q, g, a: Verdict(correct=True, reason="ok"))
+
+    assert out["rescore_history"] == [{"to_metrics_version": METRICS_VERSION - 1}]
+    assert out["rescore"]["to_metrics_version"] == METRICS_VERSION

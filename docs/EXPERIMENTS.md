@@ -1,7 +1,7 @@
 # Experiments
 
 30 FinanceBench questions over 5 filings, 3 runs each; full records in `results/<name>.json`.
-Numbers are metrics v2. Accuracy moves up to ±7 points with no change (see 005b), so retrieval
+Numbers are metrics v3. Accuracy moves up to ±7 points with no change (see 005b), so retrieval
 changes are judged by evidence hit.
 
 ## 000: error analysis of the naive baseline (2026-11-23)
@@ -73,7 +73,7 @@ changes are judged by evidence hit.
 - **Hypothesis:** "Not found" anywhere in an answer marked real but hedged answers as refusals.
 - **Change:** a refusal is the phrase alone; everything else is judged. Results rescored without rerunning RAG.
 - **Result:** 9 of 720 records changed; 2 became correct; 005b and 007 accuracy +1.1.
-- **Decision:** all results are v2 (`metrics_version` in each file).
+- **Decision:** adopted (`metrics_version` in each file); since extended by v3, see 012.
 - **Example:** 01964 run 2: "Customer deposits were the largest liability… Not found in the filing." is now judged correct.
 
 ## 008: multi-query rewriting

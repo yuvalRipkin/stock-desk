@@ -107,6 +107,8 @@ def rescore(results: dict, judge_fn: Judge | None = None) -> dict:
     out["metrics_version"] = METRICS_VERSION
     out["aggregate"] = {k: new_aggregate[k] for k in results["aggregate"]}
     out["runs"] = runs
+    if "rescore" in results:  # keep earlier rescores (e.g. v1 -> v2) instead of overwriting
+        out["rescore_history"] = [*results.get("rescore_history", []), results["rescore"]]
     out["rescore"] = {
         "from_metrics_version": version,
         "to_metrics_version": METRICS_VERSION,

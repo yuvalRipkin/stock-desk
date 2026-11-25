@@ -13,7 +13,7 @@
     "retriever": "expand",
     "max_pages": 8
   },
-  "metrics_version": 2,
+  "metrics_version": 3,
   "git": {
     "commit": "0c5b142ffff3e2358975a13619e2fd29c077b790",
     "dirty": false
@@ -2410,9 +2410,9 @@
     }
   ],
   "rescore": {
-    "from_metrics_version": 1,
-    "to_metrics_version": 2,
-    "timestamp": "2026-11-24T12:20:53.367174+00:00",
+    "from_metrics_version": 2,
+    "to_metrics_version": 3,
+    "timestamp": "2026-11-25T14:12:56.766194+00:00",
     "judge_model": "gpt-5.4",
     "previous_aggregate": {
       "accuracy": {
@@ -2425,5 +2425,24 @@
       }
     },
     "rejudged": []
-  }
+  },
+  "rescore_history": [
+    {
+      "from_metrics_version": 1,
+      "to_metrics_version": 2,
+      "timestamp": "2026-11-24T12:20:53.367174+00:00",
+      "judge_model": "gpt-5.4",
+      "previous_aggregate": {
+        "accuracy": {
+          "mean": 0.5666666666666667,
+          "std": 0.033333333333333326
+        },
+        "refusal_rate": {
+          "mean": 0.2,
+          "std": 0.03333333333333334
+        }
+      },
+      "rejudged": []
+    }
+  ]
 }

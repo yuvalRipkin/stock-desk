@@ -11,7 +11,7 @@
     "chunk_overlap": 200,
     "retrieval_k": 10
   },
-  "metrics_version": 2,
+  "metrics_version": 3,
   "git": {
     "commit": "50dacfe1c2796fa92ed17078ebca59b2690a5dc7",
     "dirty": false
@@ -2530,9 +2530,9 @@
     }
   ],
   "rescore": {
-    "from_metrics_version": 1,
-    "to_metrics_version": 2,
-    "timestamp": "2026-11-24T12:20:44.611108+00:00",
+    "from_metrics_version": 2,
+    "to_metrics_version": 3,
+    "timestamp": "2026-11-25T14:12:56.751502+00:00",
     "judge_model": "gpt-5.4",
     "previous_aggregate": {
       "accuracy": {
@@ -2545,5 +2545,24 @@
       }
     },
     "rejudged": []
-  }
+  },
+  "rescore_history": [
+    {
+      "from_metrics_version": 1,
+      "to_metrics_version": 2,
+      "timestamp": "2026-11-24T12:20:44.611108+00:00",
+      "judge_model": "gpt-5.4",
+      "previous_aggregate": {
+        "accuracy": {
+          "mean": 0.5,
+          "std": 0.033333333333333326
+        },
+        "refusal_rate": {
+          "mean": 0.2111111111111111,
+          "std": 0.01924500897298752
+        }
+      },
+      "rejudged": []
+    }
+  ]
 }

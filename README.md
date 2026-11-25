@@ -122,8 +122,9 @@ All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–01
 first question per filing parses its PDF).
 Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
-**Metrics v2:** an answer is a refusal only if it is "Not found in the filing" alone; hedged
-answers go to the judge. All results were rescored (9 of 720 records changed).
+**Metrics v3:** an answer is a refusal if it is "Not found in the filing" alone, or if its final
+"Answer:" line is (v3); hedged answers go to the judge. All results are rescored to v3 (v2 changed
+9 of 720 records, v3 changed 4, all in 012).
 
 - **002 (k=10):** +11 points accuracy, +3 evidence questions over 001. Adopted.
 - **003 / 004 (one chunk per page):** worse; same-page chunks are one split passage. Rejected.

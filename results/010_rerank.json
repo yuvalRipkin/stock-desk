@@ -21,7 +21,7 @@
     "rerank_model": "BAAI/bge-reranker-base",
     "rerank_candidates": 30
   },
-  "metrics_version": 2,
+  "metrics_version": 3,
   "git": {
     "commit": "b8ecfa4abe3dcae11c048688d028d70bd53210eb",
     "dirty": false
@@ -2545,5 +2545,22 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 2,
+    "to_metrics_version": 3,
+    "timestamp": "2026-11-25T14:12:56.777472+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.45555555555555555,
+        "std": 0.01924500897298752
+      },
+      "refusal_rate": {
+        "mean": 0.34444444444444444,
+        "std": 0.03849001794597504
+      }
+    },
+    "rejudged": []
+  }
 }

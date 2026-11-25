@@ -19,7 +19,7 @@
     "rewrite_model": "gpt-5.4-mini",
     "answer_prompt": "v2"
   },
-  "metrics_version": 2,
+  "metrics_version": 3,
   "git": {
     "commit": "440aeae7958b876c22b41d0c05646b266be55953",
     "dirty": false
@@ -40,8 +40,8 @@
       "std": 0.0
     },
     "refusal_rate": {
-      "mean": 0.0,
-      "std": 0.0
+      "mean": 0.044444444444444446,
+      "std": 0.019245008972987525
     },
     "avg_distinct_pages": {
       "mean": 4.966666666666667,
@@ -75,7 +75,7 @@
         "accuracy": 0.7666666666666667,
         "page_hit_rate": 0.6666666666666666,
         "evidence_hit_rate": 0.6666666666666666,
-        "refusal_rate": 0.0,
+        "refusal_rate": 0.03333333333333333,
         "avg_distinct_pages": 4.966666666666667,
         "avg_context_chars": 15944.166666666666,
         "avg_answer_chars": 1200.1333333333334,
@@ -395,10 +395,10 @@
             1
           ],
           "correct": false,
-          "judge_reason": "The gold answer states that PepsiCo was not involved in material legal battles, while the candidate only says the information was not found and does not provide that substantive conclusion.",
+          "judge_reason": "The answer is a refusal.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": false,
+          "refusal": true,
           "distinct_pages": 5,
           "context_chars": 14421,
           "latency_ms": 5692.379957996309,
@@ -901,7 +901,7 @@
         "accuracy": 0.7666666666666667,
         "page_hit_rate": 0.6666666666666666,
         "evidence_hit_rate": 0.6666666666666666,
-        "refusal_rate": 0.0,
+        "refusal_rate": 0.06666666666666667,
         "avg_distinct_pages": 4.966666666666667,
         "avg_context_chars": 15944.166666666666,
         "avg_answer_chars": 1155.7666666666667,
@@ -1221,10 +1221,10 @@
             1
           ],
           "correct": false,
-          "judge_reason": "The gold answer states that PepsiCo was not involved in any material legal battles, while the candidate only says the information was not found and does not provide that substantive conclusion.",
+          "judge_reason": "The answer is a refusal.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": false,
+          "refusal": true,
           "distinct_pages": 5,
           "context_chars": 14421,
           "latency_ms": 1520.7594169914955,
@@ -1409,10 +1409,10 @@
             63
           ],
           "correct": false,
-          "judge_reason": "The candidate correctly lists the FY2023 acquisitions but fails to provide the FY2022 and FY2021 acquisitions and instead says they are not found, so it does not fully answer all parts of the question.",
+          "judge_reason": "The answer is a refusal.",
           "page_hit": true,
           "evidence_hit": true,
-          "refusal": false,
+          "refusal": true,
           "distinct_pages": 5,
           "context_chars": 15740,
           "latency_ms": 1530.802292007138,
@@ -1727,7 +1727,7 @@
         "accuracy": 0.6666666666666666,
         "page_hit_rate": 0.6666666666666666,
         "evidence_hit_rate": 0.6666666666666666,
-        "refusal_rate": 0.0,
+        "refusal_rate": 0.03333333333333333,
         "avg_distinct_pages": 4.966666666666667,
         "avg_context_chars": 15944.166666666666,
         "avg_answer_chars": 1162.4666666666667,
@@ -2047,10 +2047,10 @@
             1
           ],
           "correct": false,
-          "judge_reason": "The candidate does not provide the substantive conclusion that PepsiCo was not involved in material legal battles and instead says the information was not found, which is incorrect.",
+          "judge_reason": "The answer is a refusal.",
           "page_hit": false,
           "evidence_hit": false,
-          "refusal": false,
+          "refusal": true,
           "distinct_pages": 5,
           "context_chars": 14421,
           "latency_ms": 1284.8372910084436,
@@ -2547,5 +2547,75 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 2,
+    "to_metrics_version": 3,
+    "timestamp": "2026-11-25T14:12:56.784523+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.7333333333333334,
+        "std": 0.05773502691896263
+      },
+      "refusal_rate": {
+        "mean": 0.0,
+        "std": 0.0
+      }
+    },
+    "rejudged": [
+      {
+        "run": 1,
+        "id": "financebench_id_00735",
+        "refusal": [
+          false,
+          true
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The answer is a refusal."
+      },
+      {
+        "run": 2,
+        "id": "financebench_id_00735",
+        "refusal": [
+          false,
+          true
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The answer is a refusal."
+      },
+      {
+        "run": 2,
+        "id": "financebench_id_01079",
+        "refusal": [
+          false,
+          true
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The answer is a refusal."
+      },
+      {
+        "run": 3,
+        "id": "financebench_id_00735",
+        "refusal": [
+          false,
+          true
+        ],
+        "correct": [
+          false,
+          false
+        ],
+        "judge_reason": "The answer is a refusal."
+      }
+    ]
+  }
 }

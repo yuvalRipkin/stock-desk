@@ -13,7 +13,7 @@
     "retriever": "dedup",
     "fetch_multiplier": 4
   },
-  "metrics_version": 2,
+  "metrics_version": 3,
   "git": {
     "commit": "a20aa8db2908e28719b2a054241ed2eb202c0c38",
     "dirty": false
@@ -2082,9 +2082,9 @@
     }
   ],
   "rescore": {
-    "from_metrics_version": 1,
-    "to_metrics_version": 2,
-    "timestamp": "2026-11-24T12:20:48.262717+00:00",
+    "from_metrics_version": 2,
+    "to_metrics_version": 3,
+    "timestamp": "2026-11-25T14:12:56.754512+00:00",
     "judge_model": "gpt-5.4",
     "previous_aggregate": {
       "accuracy": {
@@ -2092,37 +2092,56 @@
         "std": 0.033333333333333326
       },
       "refusal_rate": {
-        "mean": 0.37777777777777777,
-        "std": 0.03849001794597508
+        "mean": 0.3555555555555555,
+        "std": 0.01924500897298752
       }
     },
-    "rejudged": [
-      {
-        "run": 1,
-        "id": "financebench_id_01290",
-        "refusal": [
-          true,
-          false
-        ],
-        "correct": [
-          false,
-          false
-        ],
-        "judge_reason": "The candidate answer fails to state Boeing\u2019s primary customer categories\u2014commercial airlines and the U.S. government\u2014and instead says the information was not found."
+    "rejudged": []
+  },
+  "rescore_history": [
+    {
+      "from_metrics_version": 1,
+      "to_metrics_version": 2,
+      "timestamp": "2026-11-24T12:20:48.262717+00:00",
+      "judge_model": "gpt-5.4",
+      "previous_aggregate": {
+        "accuracy": {
+          "mean": 0.3333333333333333,
+          "std": 0.033333333333333326
+        },
+        "refusal_rate": {
+          "mean": 0.37777777777777777,
+          "std": 0.03849001794597508
+        }
       },
-      {
-        "run": 2,
-        "id": "financebench_id_01328",
-        "refusal": [
-          true,
-          false
-        ],
-        "correct": [
-          false,
-          false
-        ],
-        "judge_reason": "The gold answer states PepsiCo reported $411 million of restructuring costs in FY2022, while the candidate incorrectly says 0/not found."
-      }
-    ]
-  }
+      "rejudged": [
+        {
+          "run": 1,
+          "id": "financebench_id_01290",
+          "refusal": [
+            true,
+            false
+          ],
+          "correct": [
+            false,
+            false
+          ],
+          "judge_reason": "The candidate answer fails to state Boeing\u2019s primary customer categories\u2014commercial airlines and the U.S. government\u2014and instead says the information was not found."
+        },
+        {
+          "run": 2,
+          "id": "financebench_id_01328",
+          "refusal": [
+            true,
+            false
+          ],
+          "correct": [
+            false,
+            false
+          ],
+          "judge_reason": "The gold answer states PepsiCo reported $411 million of restructuring costs in FY2022, while the candidate incorrectly says 0/not found."
+        }
+      ]
+    }
+  ]
 }

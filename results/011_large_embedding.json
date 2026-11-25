@@ -18,7 +18,7 @@
     "n_rewrites": 3,
     "rewrite_model": "gpt-5.4-mini"
   },
-  "metrics_version": 2,
+  "metrics_version": 3,
   "git": {
     "commit": "428a31a023e567309d97f1847e1a5d6c997c617f",
     "dirty": false
@@ -2449,5 +2449,22 @@
         }
       ]
     }
-  ]
+  ],
+  "rescore": {
+    "from_metrics_version": 2,
+    "to_metrics_version": 3,
+    "timestamp": "2026-11-25T14:12:56.780717+00:00",
+    "judge_model": "gpt-5.4",
+    "previous_aggregate": {
+      "accuracy": {
+        "mean": 0.6777777777777777,
+        "std": 0.05091750772173154
+      },
+      "refusal_rate": {
+        "mean": 0.07777777777777778,
+        "std": 0.01924500897298753
+      }
+    },
+    "rejudged": []
+  }
 }
