@@ -1,3 +1,5 @@
+import pytest
+
 from stockdesk.evals.metrics import distinct_pages, evidence_hit, is_refusal, page_hit
 
 EVIDENCE = (
@@ -91,3 +93,41 @@ def test_distinct_pages_with_duplicates():
 
 def test_distinct_pages_empty():
     assert distinct_pages([]) == 0
+
+
+# is_refusal: final "Answer:" line (metrics v3)
+
+STEPS = "Figures:\n- The context has no legal proceedings section (pages 1, 2).\n\n"
+
+
+@pytest.mark.parametrize(
+    "final",
+    [
+        "Answer: Not found in the filing.",
+        "**Answer:** Not found in the filing.",
+        "**Answer**: not found in the filing",
+        "- Answer: **Not found in the filing.**",
+    ],
+)
+def test_final_answer_line_with_only_the_phrase_is_a_refusal(final: str):
+    assert is_refusal(STEPS + final)
+
+
+def test_final_answer_line_with_content_is_not_a_refusal():
+    assert not is_refusal(
+        STEPS + "Answer: No. Not found in the filing for FY2021, but FY2022 is $5M."
+    )
+    assert not is_refusal(STEPS + "Answer: $9,068 million (pages 61, 63).")
+
+
+def test_refusal_phrase_on_a_final_line_without_answer_label_is_hedged():
+    # a partial answer that ends by saying the rest is missing: the judge grades it
+    assert not is_refusal("FY2023 acquisitions: Czech plant (page 63).\nNot found in the filing.")
+
+
+def test_answer_line_that_is_not_last_does_not_count():
+    assert not is_refusal("Answer: Not found in the filing.\nActually, revenue was $5M (page 2).")
+
+
+def test_answer_line_alone_is_a_refusal():
+    assert is_refusal("Answer: Not found in the filing.")
