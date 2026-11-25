@@ -145,3 +145,9 @@ def test_cli_writes_file_and_refuses_second_rescore(
     assert list(tmp_path.iterdir()) == [path]  # no leftover .part file
 
     assert rescore_module.main([str(path)]) == 1
+
+
+def test_as_record_ignores_fields_of_removed_features():
+    raw = {**record("a", "Customer deposits", refusal=False, correct=True), "rerank_ms": 812.5}
+
+    assert as_record(raw) == as_record(record("a", "Customer deposits", False, True))

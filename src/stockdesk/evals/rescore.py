@@ -14,6 +14,7 @@ import json
 import math
 import sys
 from collections.abc import Callable
+from dataclasses import fields
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -34,7 +35,13 @@ class SummaryMismatch(Exception):
 
 
 def as_record(raw: dict) -> QuestionRecord:
-    return QuestionRecord(**{"context_chars": None, **raw})
+    """A saved record as a QuestionRecord, for summaries.
+
+    Fields added later default (context_chars to None); fields of removed features (010's
+    rerank_ms) are ignored here and kept in the saved record.
+    """
+    known = {f.name for f in fields(QuestionRecord)}
+    return QuestionRecord(**{"context_chars": None, **{k: v for k, v in raw.items() if k in known}})
 
 
 def same_value(a: object, b: object) -> bool:

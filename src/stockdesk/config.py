@@ -37,22 +37,13 @@ class Settings(BaseSettings):
     query_rewrite: Literal["none", "multi"] = "none"  # multi: LLM rewrites, fused with RRF
     n_rewrites: int = Field(default=3, ge=1)  # multi: rewritten queries per question
     rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries
-    rerank: Literal["none", "cross_encoder"] = "none"  # expand: re-rank candidates before pages
-    rerank_model: str = "BAAI/bge-reranker-base"
-    rerank_candidates: int = Field(default=30, ge=1)  # cross_encoder: chunks fetched to re-rank
 
     @model_validator(mode="after")
-    def check_retriever_options(self) -> "Settings":
+    def check_rewrite_retriever(self) -> "Settings":
         if self.query_rewrite == "multi" and self.retriever != "expand":
             raise ValueError(
                 f"QUERY_REWRITE=multi requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
             )
-        if self.rerank != "none" and self.retriever != "expand":
-            raise ValueError(
-                f"RERANK={self.rerank} requires RETRIEVER=expand (got {self.retriever})"
-            )
-        if self.rerank != "none" and self.query_rewrite != "none":
-            raise ValueError("RERANK and QUERY_REWRITE can't be combined; set one to none")
         return self
 
     def experiment_config(self) -> dict[str, object]:

@@ -6,7 +6,7 @@ No DB, PDFs or LLM: all mocked.
 import pytest
 from langchain_core.documents import Document
 
-from stockdesk.retrieval import expand, get_retriever, naive, rerank
+from stockdesk.retrieval import expand, get_retriever, naive
 from stockdesk.retrieval import pages as pages_module
 from stockdesk.retrieval.pages import dedup_by_page, rrf_merge
 
@@ -143,8 +143,7 @@ def mock_expand(monkeypatch: pytest.MonkeyPatch):
 
 
 def set_settings(monkeypatch: pytest.MonkeyPatch, **update) -> None:
-    defaults = {"query_rewrite": "none", "rerank": "none"}
-    settings = expand.get_settings().model_copy(update={**defaults, **update})
+    settings = expand.get_settings().model_copy(update={"query_rewrite": "none", **update})
     monkeypatch.setattr(expand, "get_settings", lambda: settings)
 
 
@@ -201,12 +200,7 @@ class FakeStore:
 def multi_query(monkeypatch: pytest.MonkeyPatch):
     """Rewriting on, with the rewriter, store and PDF reader mocked."""
     settings = expand.get_settings().model_copy(
-        update={
-            "query_rewrite": "multi",
-            "rerank": "none",
-            "max_pages": 5,
-            "exclude_exhibits": False,
-        }
+        update={"query_rewrite": "multi", "max_pages": 5, "exclude_exhibits": False}
     )
     monkeypatch.setattr(expand, "get_settings", lambda: settings)
     monkeypatch.setattr(naive, "get_settings", lambda: settings)
@@ -268,89 +262,6 @@ def test_naive_search_reports_the_question_as_its_only_query(monkeypatch):
 
     assert result.queries == ["q"]
     assert pages(result.docs) == [1]
-
-
-# expand with RERANK=cross_encoder
-
-
-class FakeCrossEncoder:
-    """Scores a (question, chunk) pair by looking up the chunk text; records what it scored."""
-
-    def __init__(self, scores: dict[str, float]):
-        self.scores = scores
-        self.pairs: list[tuple[str, str]] = []
-
-    def predict(self, pairs):
-        self.pairs += pairs
-        return [self.scores[text] for _, text in pairs]
-
-
-@pytest.fixture
-def reranking(mock_expand, monkeypatch: pytest.MonkeyPatch):
-    """Re-ranking on with 6 candidates and a fake model; returns (hits, model, searched k's)."""
-    hits, _ = mock_expand
-    set_settings(monkeypatch, rerank="cross_encoder", rerank_candidates=6, max_pages=2)
-    searched_k: list[int] = []
-
-    def fake_retrieve(q, doc, k):
-        searched_k.append(k)
-        return hits[:k]
-
-    monkeypatch.setattr(expand.naive, "retrieve", fake_retrieve)
-    model = FakeCrossEncoder({})
-    loaded: list[str] = []
-    monkeypatch.setattr(rerank, "load_model", lambda name: loaded.append(name) or model)
-    return hits, model, searched_k
-
-
-def test_rerank_reorders_by_score_then_dedups_and_caps(reranking):
-    hits, model, _ = reranking
-    hits += [chunk(3, "a"), chunk(7, "b"), chunk(9, "c"), chunk(9, "d"), chunk(12, "e")]
-    model.scores.update({"a": 0.1, "b": 0.2, "c": 0.5, "d": 0.9, "e": 0.7})
-
-    result = expand.search("q", "DOC", k=2)
-
-    assert pages(result.docs) == [9, 12]  # d (page 9) first; c's page 9 deduped; capped at 2
-    assert model.pairs == [("q", t) for t in "abcde"]
-    assert result.rerank_ms is not None and result.rerank_ms >= 0
-
-
-def test_rerank_fetches_rerank_candidates_instead_of_k(reranking):
-    hits, model, searched_k = reranking
-    hits += [chunk(p, f"t{p}") for p in range(1, 9)]
-    model.scores.update({f"t{p}": float(p) for p in range(1, 9)})
-
-    result = expand.search("q", "DOC", k=2)
-
-    assert searched_k == [6]
-    assert len(model.pairs) == 6
-    assert pages(result.docs) == [6, 5]
-
-
-def test_rerank_ties_keep_vector_search_order(reranking):
-    hits, model, _ = reranking
-    hits += [chunk(4, "x"), chunk(2, "y"), chunk(8, "z")]
-    model.scores.update({"x": 0.5, "y": 0.5, "z": 0.1})
-
-    assert pages(expand.retrieve("q", "DOC")) == [4, 2]
-
-
-def test_no_model_loaded_without_rerank(mock_expand, monkeypatch):
-    hits, _ = mock_expand
-    hits += [chunk(3), chunk(7)]
-    set_settings(monkeypatch, rerank="none", max_pages=5)
-    monkeypatch.setattr(rerank, "load_model", lambda name: pytest.fail("model loaded"))
-
-    result = expand.search("q", "DOC", k=2)
-
-    assert pages(result.docs) == [3, 7]
-    assert result.rerank_ms is None
-
-
-def test_rerank_of_nothing_loads_no_model(monkeypatch):
-    monkeypatch.setattr(rerank, "load_model", lambda name: pytest.fail("model loaded"))
-
-    assert rerank.rerank("q", []) == []
 
 
 # get_retriever

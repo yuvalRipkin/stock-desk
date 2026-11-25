@@ -23,7 +23,6 @@ class RagResult:
     answer: str
     docs: list[Document]
     queries: list[str]  # searched: the question, then any rewrites
-    rerank_ms: float | None = None
 
 
 def build_context(docs: list[Document]) -> str:
@@ -48,6 +47,4 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
             HumanMessage(f"Context:\n{build_context(docs)}\n\nQuestion: {question}"),
         ]
     )
-    return RagResult(
-        answer=response.text, docs=docs, queries=retrieval.queries, rerank_ms=retrieval.rerank_ms
-    )
+    return RagResult(answer=response.text, docs=docs, queries=retrieval.queries)

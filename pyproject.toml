@@ -18,7 +18,6 @@ dependencies = [
     "python-dotenv",
     "rapidfuzz>=3.14.6",
     "requests>=2.34.2",
-    "sentence-transformers>=6.3.0",
 ]
 
 [dependency-groups]
