@@ -10,6 +10,7 @@ from langchain_core.documents import Document
 class Retrieval:
     docs: list[Document]
     queries: list[str]  # what was searched: the question first, then any rewrites
+    rerank_ms: float | None = None  # time spent re-ranking; None if not re-ranked
 
 
 Retriever = Callable[[str, str | None, int | None], Retrieval]

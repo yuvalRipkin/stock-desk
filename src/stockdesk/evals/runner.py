@@ -62,6 +62,7 @@ class QuestionRecord:
     latency_ms: float | None  # latency of rag.answer() only
     error: str | None
     queries: list[str] | None = None  # searched: the question, then any rewrites; None pre-008
+    rerank_ms: float | None = None  # re-ranking time, part of latency_ms; None if not re-ranked
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -160,6 +161,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
     pages = [d.metadata["page"] for d in result.docs]
     record.answer = result.answer
     record.queries = result.queries
+    record.rerank_ms = result.rerank_ms
     record.retrieved_pages = pages
     record.page_hit = page_hit(pages, case.evidence_pages)
     record.evidence_hit = evidence_hit([d.page_content for d in result.docs], case.evidence_texts)

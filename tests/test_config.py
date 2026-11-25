@@ -36,3 +36,30 @@ def test_rewrite_settings_are_in_the_experiment_config():
 def test_chunking_defaults_to_plain_and_is_in_the_experiment_config():
     assert settings().chunking == "plain"
     assert settings(chunking="section_header").experiment_config()["chunking"] == "section_header"
+
+
+def test_rerank_defaults():
+    s = settings()
+
+    assert (s.rerank, s.rerank_model, s.rerank_candidates) == (
+        "none",
+        "BAAI/bge-reranker-base",
+        30,
+    )
+
+
+def test_rerank_with_expand_is_allowed_and_in_the_experiment_config():
+    config = settings(retriever="expand", rerank="cross_encoder").experiment_config()
+
+    assert config["rerank"] == "cross_encoder"
+    assert config["rerank_candidates"] == 30
+
+
+def test_rerank_with_another_retriever_is_rejected():
+    with pytest.raises(ValidationError, match="RERANK=cross_encoder requires RETRIEVER=expand"):
+        settings(retriever="naive", rerank="cross_encoder")
+
+
+def test_rerank_with_query_rewriting_is_rejected():
+    with pytest.raises(ValidationError, match="can't be combined"):
+        settings(retriever="expand", rerank="cross_encoder", query_rewrite="multi")
