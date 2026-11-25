@@ -43,4 +43,27 @@ def test_large_embedding_model_needs_3072_dimensions():
         settings(embedding_model="text-embedding-3-large", embedding_dim=3072).embedding_dim == 3072
     )
     with pytest.raises(ValidationError, match="produces 3072-dimensional vectors"):
-        settings(embedding_model="text-embedding-3-large")  # default EMBEDDING_DIM=1536
+        settings(embedding_model="text-embedding-3-large", embedding_dim=1536)
+    with pytest.raises(ValidationError, match="produces 1536-dimensional vectors"):
+        settings(embedding_model="text-embedding-3-small")  # default EMBEDDING_DIM is 3072
+
+
+def test_defaults_are_experiment_011():
+    config = settings().experiment_config()
+
+    assert {k: config[k] for k in DEFAULTS_011} == DEFAULTS_011
+
+
+DEFAULTS_011 = {
+    "table": "naive_1000_large",
+    "embedding_model": "text-embedding-3-large",
+    "embedding_dim": 3072,
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "chunking": "plain",
+    "retriever": "expand",
+    "retrieval_k": 10,
+    "max_pages": 5,
+    "exclude_exhibits": True,
+    "query_rewrite": "none",
+}

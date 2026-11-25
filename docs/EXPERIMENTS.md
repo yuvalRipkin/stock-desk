@@ -100,3 +100,11 @@ changes are judged by evidence hit.
 - **Result:** evidence hit 43.3% vs 63.3% (−6 questions), accuracy 45.6%, refusals 34.4%; ~0.8 s per question to re-rank. Fixed 01964, 00585, 04481 (00585 and 04481 never answered before); broke 00563, 00917, 01091, 03620 (3/3 → 0/3).
 - **Decision:** rejected. Not a bug: higher score = more relevant, inputs are chunks under the 512-token limit. The model is confident on statement tables (page 97 scores 0.70) but scores every chunk near zero on prose questions, where its order is noise (00917: all ≤ 0.01). Code is in `b8ecfa4`, removed afterwards. Follow-up, not done: fuse vector and re-ranker rankings with RRF.
 - **Example:** 01091 (Boeing legal proceedings): gold page 112 fell from 2nd to 20th behind the 10-K index page (score 0.03).
+
+## 011: text-embedding-3-large
+
+- **Hypothesis:** a stronger embedding ranks the right pages higher with nothing else changed.
+- **Change:** 007's config on `naive_1000_large`: same chunks (1000/200), embedded with `text-embedding-3-large` (3,072 dims).
+- **Result:** accuracy 67.8% vs 55.6% (+12.2, beyond the ±7 noise floor), evidence hit 66.7% vs 63.3% (+5 questions, −4, with 3 of the 4 still correct), refusals 7.8% vs 15.6%, no latency cost.
+- **Decision:** adopted; now the default config. Trade-off: 3,072 dims doubles vector storage and exceeds pgvector's 2,000-dimension index limit; fine for exact search at ~4,600 rows. At scale, use the API's `dimensions` parameter to shorten vectors.
+- **Example:** 01964 (AmEx largest liability) 1/3 → 3/3 with gold page 97 retrieved at last; also 04481 and 00757 0/3 → 3/3, 00222 0/3 → 2/3, 00476 and 01290 0/3 → 1/3.

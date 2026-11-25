@@ -28,19 +28,19 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     log_level: str = "INFO"
 
-    # Experiment config
-    table: str = "naive_1000"
-    embedding_model: str = "text-embedding-3-small"
-    embedding_dim: int = 1536  # must match embedding_model and the table
+    # Experiment config. Defaults are the best config so far (experiment 011).
+    table: str = "naive_1000_large"
+    embedding_model: str = "text-embedding-3-large"
+    embedding_dim: int = 3072  # must match embedding_model and the table
     llm_model: str | None = None
     judge_model: str = "gpt-5.4"  # grades answers; stronger than llm_model on purpose
     chunk_size: int = 1000
     chunk_overlap: int = 200
     chunking: Literal["plain", "section_header"] = "plain"  # section_header: see ingestion
-    retrieval_k: int = 5
-    retriever: Literal["naive", "expand"] = "naive"
+    retrieval_k: int = 10
+    retriever: Literal["naive", "expand"] = "expand"
     max_pages: int = Field(default=5, ge=1)  # expand: full pages sent to the LLM
-    exclude_exhibits: bool = False  # skip pages from the first attached exhibit on
+    exclude_exhibits: bool = True  # skip pages from the first attached exhibit on
     query_rewrite: Literal["none", "multi"] = "none"  # multi: LLM rewrites, fused with RRF
     n_rewrites: int = Field(default=3, ge=1)  # multi: rewritten queries per question
     rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries

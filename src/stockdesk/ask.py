@@ -1,4 +1,4 @@
-"""CLI: answer a question about one filing using naive retrieval + an LLM.
+"""CLI: answer a question about one filing with the configured retriever + an LLM.
 
 Usage:
     uv run python -m stockdesk.ask --doc AMD_2022_10K "What was total revenue in 2022?"

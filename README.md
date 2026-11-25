@@ -5,11 +5,12 @@ well it does against the [FinanceBench](https://github.com/patronus-ai/financebe
 
 What exists today:
 
-- **Naive RAG over 5 filings.** The 10-Ks listed in `data_manifest.txt` are split into
-  1000-character chunks, embedded with OpenAI `text-embedding-3-small`, and stored in PostgreSQL
-  with pgvector. A question is answered by vector search over one filing (top 5 chunks) and an
-  LLM prompted to answer only from those excerpts, cite page numbers, or reply
-  "Not found in the filing."
+- **RAG over 5 filings.** The 10-Ks listed in `data_manifest.txt` are split into 1000-character
+  chunks, embedded with OpenAI `text-embedding-3-large`, and stored in PostgreSQL with pgvector.
+  A question is answered by vector search over one filing (top 10 chunks, attached exhibits
+  excluded), the full text of the first 5 distinct pages, and an LLM prompted to answer only
+  from those pages, cite page numbers, or reply "Not found in the filing." This is the best
+  config so far (experiment 011) and the default; see [Results](#results).
 - **FinanceBench eval.** The 30 FinanceBench questions about those filings are answered by the
   same code the CLI runs, scored for retrieval (did it find the gold evidence page and text?),
   and graded by an LLM judge against the gold answer. See [Results](#results).
@@ -24,7 +25,7 @@ cp .env.example .env   # set OPENAI_API_KEY; LLM_MODEL defaults to gpt-5.4-mini
 make install           # uv sync + pre-commit hooks (ruff check, ruff format)
 make db-up             # Postgres + pgvector in Docker, waits until healthy
 make fetch             # FinanceBench questions + the 5 PDFs in data_manifest.txt, into data/
-make ingest            # chunk, embed and store the PDFs (calls the OpenAI embeddings API)
+make ingest            # chunk, embed and store the PDFs in naive_1000_large (OpenAI embeddings API)
 make test
 ```
 
@@ -37,9 +38,9 @@ make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?"
 Expected output (the wording can vary between runs, even at temperature 0):
 
 ```text
-Total net revenue in 2022 was $23.601 billion (page 47).
+Total revenue in 2022 was $23,601 million, or about $23.6 billion. (pages 47, 67)
 
-Retrieved pages (AMD_2022_10K): 47, 67, 66, 48, 63
+Retrieved pages (AMD_2022_10K): 47, 66, 49, 48, 67
 ```
 
 `DOC` is any `doc_name` in `data_manifest.txt`. Pages are zero-based PDF page indexes, the same
@@ -79,6 +80,10 @@ Each run answers all 30 questions with `stockdesk.rag.answer`, then:
   whether any gold evidence text fuzzy-matches a retrieved chunk.
 - **Refusal rate:** how often the answer is only "Not found in the filing."
 
+The defaults in `config.py` are the best config so far. Each results file records the config
+it ran with; set those values as environment variables to reproduce an earlier experiment
+(its table must be ingested with the same `TABLE`, `EMBEDDING_MODEL` and chunking settings).
+
 Results go to `results/<NAME>.json` with the full config, the git commit, a dirty flag, every
 answer and the judge's reason. The runner refuses to overwrite an existing file unless you pass
 `--force` (`uv run python -m stockdesk.evals.runner --name ... --force`).
@@ -100,9 +105,11 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [008_rewrite_multi](results/008_rewrite_multi.json) | 007 + multi-query rewriting (3 rewrites, RRF) | 1000 / 200 overlap | 10 per query | 54.4% ± 13.5 | 63.3% ± 5.8 | 64.4% ± 6.9 | 11.1% ± 5.1 | 4.48 s / 8.41 s* |
 | [009_section_header](results/009_section_header.json) | 007 on section-header chunks | 1000 / 200 overlap, `[section]` header | 10 | 48.9% ± 1.9 | 60.0% ± 0.0 | 63.3% ± 0.0 | 26.7% ± 3.3 | 1.10 s / 3.82 s* |
 | [010_rerank](results/010_rerank.json) | 007 + cross-encoder re-ranking (bge-reranker-base, 30 candidates) | 1000 / 200 overlap | 30 → re-ranked | 45.6% ± 1.9 | 43.3% ± 0.0 | 43.3% ± 0.0 | 34.4% ± 3.8 | 1.91 s / 5.36 s* |
+| [011_large_embedding](results/011_large_embedding.json) | 007 on `text-embedding-3-large` (3072 dims) | 1000 / 200 overlap | 10 | 67.8% ± 5.1 | 66.7% ± 0.0 | 66.7% ± 0.0 | 7.8% ± 1.9 | 1.21 s / 3.78 s* |
 
-All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
-by `gpt-5.4`. \*p95 includes a cold start (the first question per filing parses its PDF).
+All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–010 embed with
+`text-embedding-3-small`, 011 with `text-embedding-3-large`. \*p95 includes a cold start (the
+first question per filing parses its PDF).
 Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
 **Metrics v2:** an answer is a refusal only if it is "Not found in the filing" alone; hedged
@@ -122,6 +129,8 @@ answers go to the judge. All results were rescored (9 of 720 records changed).
   number-dense statement chunks. Rejected.
 - **010 (cross-encoder re-ranking):** evidence hit 43.3% vs 63.3% (−6 questions); confident on
   statement tables, near-random on prose questions. Rejected; code removed.
+- **011 (text-embedding-3-large):** accuracy 67.8% vs 55.6% (+12.2, beyond the noise floor),
+  refusals halved, no latency cost. Adopted; now the default config.
 
 ## Roadmap
 
