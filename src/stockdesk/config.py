@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     log_level: str = "INFO"
 
-    # Experiment config. Defaults are the best config so far (experiment 011).
+    # Experiment config. Defaults are the best config so far (experiment 012).
     table: str = "naive_1000_large"
     embedding_model: str = "text-embedding-3-large"
     embedding_dim: int = 3072  # must match embedding_model and the table
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     query_rewrite: Literal["none", "multi"] = "none"  # multi: LLM rewrites, fused with RRF
     n_rewrites: int = Field(default=3, ge=1)  # multi: rewritten queries per question
     rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries
-    answer_prompt: Literal["v1", "v2"] = "v1"  # prompts.ANSWER_PROMPTS; v2: figures, steps, Answer:
+    answer_prompt: Literal["v1", "v2"] = "v2"  # prompts.ANSWER_PROMPTS; v2: figures, steps, Answer:
 
     @model_validator(mode="after")
     def check_consistency(self) -> "Settings":

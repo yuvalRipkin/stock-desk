@@ -48,13 +48,13 @@ def test_large_embedding_model_needs_3072_dimensions():
         settings(embedding_model="text-embedding-3-small")  # default EMBEDDING_DIM is 3072
 
 
-def test_defaults_are_experiment_011():
+def test_defaults_are_experiment_012():
     config = settings().experiment_config()
 
-    assert {k: config[k] for k in DEFAULTS_011} == DEFAULTS_011
+    assert {k: config[k] for k in DEFAULTS_012} == DEFAULTS_012
 
 
-DEFAULTS_011 = {
+DEFAULTS_012 = {
     "table": "naive_1000_large",
     "embedding_model": "text-embedding-3-large",
     "embedding_dim": 3072,
@@ -66,9 +66,10 @@ DEFAULTS_011 = {
     "max_pages": 5,
     "exclude_exhibits": True,
     "query_rewrite": "none",
+    "answer_prompt": "v2",
 }
 
 
-def test_answer_prompt_defaults_to_v1_and_is_in_the_experiment_config():
-    assert settings().answer_prompt == "v1"
-    assert settings(answer_prompt="v2").experiment_config()["answer_prompt"] == "v2"
+def test_answer_prompt_defaults_to_v2_and_is_in_the_experiment_config():
+    assert settings().answer_prompt == "v2"
+    assert settings(answer_prompt="v1").experiment_config()["answer_prompt"] == "v1"

@@ -108,3 +108,11 @@ changes are judged by evidence hit.
 - **Result:** accuracy 67.8% vs 55.6% (+12.2, beyond the ±7 noise floor), evidence hit 66.7% vs 63.3% (+5 questions, −4, with 3 of the 4 still correct), refusals 7.8% vs 15.6%, no latency cost.
 - **Decision:** adopted; now the default config. Trade-off: 3,072 dims doubles vector storage and exceeds pgvector's 2,000-dimension index limit; fine for exact search at ~4,600 rows. At scale, use the API's `dimensions` parameter to shorten vectors.
 - **Example:** 01964 (AmEx largest liability) 1/3 → 3/3 with gold page 97 retrieved at last; also 04481 and 00757 0/3 → 3/3, 00222 0/3 → 2/3, 00476 and 01290 0/3 → 1/3.
+
+## 012: answer prompt v2
+
+- **Hypothesis:** answers fail on generation too: conclusions before arithmetic (00684 said "Yes", then computed a decline) and refusals on judgment questions.
+- **Change:** `ANSWER_PROMPT=v2`: list figures with pages, show arithmetic, reason from the filing's explanations on judgment questions, end with an "Answer:" line consistent with the steps; refuse only when facts are missing. Retrieval as in 011.
+- **Result:** accuracy 73.3% vs 67.8% (+5.5, within the ±7 noise floor but consistent: 6 questions up, 2 down), identical retrieval, refusals 4.4% (metrics v3; 4 refusals hid behind an "Answer:" line), answers ~1,170 chars, p50 latency 1.2 → 1.9 s. A number-by-number check of wrong answers without gold evidence found no fabricated figures.
+- **Decision:** adopted; now the default. Known cost: overconfidence when a key page is missing (00678, Boeing gross margin: income statement not retrieved, concluded from program margins; 1/3 → 0/3).
+- **Example:** 00723 (AmEx operating margin, a judgment question): refused 3/3 in 011, correct 2/3 in 012 ("not the right metric for a spend-centric business").

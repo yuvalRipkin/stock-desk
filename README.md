@@ -9,8 +9,9 @@ What exists today:
   chunks, embedded with OpenAI `text-embedding-3-large`, and stored in PostgreSQL with pgvector.
   A question is answered by vector search over one filing (top 10 chunks, attached exhibits
   excluded), the full text of the first 5 distinct pages, and an LLM prompted to answer only
-  from those pages, cite page numbers, or reply "Not found in the filing." This is the best
-  config so far (experiment 011) and the default; see [Results](#results).
+  from those pages: list the figures it uses with their pages, show any arithmetic, and end with
+  an "Answer:" line, or reply "Not found in the filing." This is the best config so far
+  (experiment 012) and the default; see [Results](#results).
 - **FinanceBench eval.** The 30 FinanceBench questions about those filings are answered by the
   same code the CLI runs, scored for retrieval (did it find the gold evidence page and text?),
   and graded by an LLM judge against the gold answer. See [Results](#results).
@@ -38,7 +39,11 @@ make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?"
 Expected output (the wording can vary between runs, even at temperature 0):
 
 ```text
-Total revenue in 2022 was $23,601 million, or about $23.6 billion. (pages 47, 67)
+Figures:
+- Total net revenue / total sales to external customers in 2022: $23,601 million (pages 47, 65)
+- Consolidated net revenue summary for 2022: $23,601 million (page 47)
+
+Answer: Total revenue in 2022 was $23,601 million.
 
 Retrieved pages (AMD_2022_10K): 47, 66, 49, 48, 67
 ```
@@ -116,6 +121,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [009_section_header](results/009_section_header.json) | 007 on section-header chunks | 1000 / 200 overlap, `[section]` header | 10 | 48.9% ± 1.9 | 60.0% ± 0.0 | 63.3% ± 0.0 | 26.7% ± 3.3 | 1.10 s / 3.82 s* |
 | [010_rerank](results/010_rerank.json) | 007 + cross-encoder re-ranking (bge-reranker-base, 30 candidates) | 1000 / 200 overlap | 30 → re-ranked | 45.6% ± 1.9 | 43.3% ± 0.0 | 43.3% ± 0.0 | 34.4% ± 3.8 | 1.91 s / 5.36 s* |
 | [011_large_embedding](results/011_large_embedding.json) | 007 on `text-embedding-3-large` (3072 dims) | 1000 / 200 overlap | 10 | 67.8% ± 5.1 | 66.7% ± 0.0 | 66.7% ± 0.0 | 7.8% ± 1.9 | 1.21 s / 3.78 s* |
+| [012_prompt_v2](results/012_prompt_v2.json) | 011 + answer prompt v2 (figures, steps, `Answer:` line) | 1000 / 200 overlap | 10 | 73.3% ± 5.8 | 66.7% ± 0.0 | 66.7% ± 0.0 | 4.4% ± 1.9 | 1.87 s / 5.07 s* |
 
 All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–010 embed with
 `text-embedding-3-small`, 011 with `text-embedding-3-large`. \*p95 includes a cold start (the
@@ -141,7 +147,9 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 - **010 (cross-encoder re-ranking):** evidence hit 43.3% vs 63.3% (−6 questions); confident on
   statement tables, near-random on prose questions. Rejected; code removed.
 - **011 (text-embedding-3-large):** accuracy 67.8% vs 55.6% (+12.2, beyond the noise floor),
-  refusals halved, no latency cost. Adopted; now the default config.
+  refusals halved, no latency cost. Adopted.
+- **012 (answer prompt v2):** accuracy 73.3% vs 67.8% (+5.5, within noise but consistent: 6
+  questions up, 2 down, identical retrieval); refusals 4.4%. Adopted; now the default config.
 
 ## Roadmap
 
