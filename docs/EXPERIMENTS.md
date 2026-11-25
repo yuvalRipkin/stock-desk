@@ -92,3 +92,11 @@ changes are judged by evidence hit.
 - **Decision:** rejected: headers dilute number-dense statement chunks (similarity drops 3–5x more than for MD&A). 009a (boundaries only) was skipped: it changes only 34 of 1,229 pages and 3 gold pages, none of them page 97.
 - **Example:** 03620 (PepsiCo EBITDA less capex): cash-flow page 63 fell from 5th to 8th behind MD&A page 55; 3/3 → 0/3. 01964's page 97 rose to 8th, still cut by the 5-page cap.
 - **Known quirk:** PepsiCo prints its statements inside Item 7, so they are labeled under Item 7, as filed.
+
+## 010: cross-encoder re-ranking
+
+- **Hypothesis:** a cross-encoder ranks the gold page into the 5-page budget (01964's page 97 was 8th in 009).
+- **Change:** fetch 30 chunks (007's filters), re-rank (question, chunk) pairs with `BAAI/bge-reranker-base` on MPS, then pages as in 007.
+- **Result:** evidence hit 43.3% vs 63.3% (−6 questions), accuracy 45.6%, refusals 34.4%; ~0.8 s per question to re-rank. Fixed 01964, 00585, 04481 (00585 and 04481 never answered before); broke 00563, 00917, 01091, 03620 (3/3 → 0/3).
+- **Decision:** rejected. Not a bug: higher score = more relevant, inputs are chunks under the 512-token limit. The model is confident on statement tables (page 97 scores 0.70) but scores every chunk near zero on prose questions, where its order is noise (00917: all ≤ 0.01). Code is in `b8ecfa4`, removed afterwards. Follow-up, not done: fuse vector and re-ranker rankings with RRF.
+- **Example:** 01091 (Boeing legal proceedings): gold page 112 fell from 2nd to 20th behind the 10-K index page (score 0.03).
