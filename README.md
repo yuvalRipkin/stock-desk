@@ -170,8 +170,12 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 ## Roadmap
 
 - **Phase 1: Ingestion + baseline RAG** (done)
-- **Phase 2: FinanceBench evals** (done: runner, metrics, LLM judge, naive baseline)
-- **Phase 3: Hybrid search + re-ranking** (planned): BM25 + vector retrieval
+- **Phase 2: FinanceBench evals** (done: runner, metrics, LLM judge, naive baseline, held-out
+  test split)
+- **Phase 3: Retrieval and answer tuning** (done: experiments 002–012; held-out accuracy 38.1%
+  → 71.9%). Page expansion, exhibit exclusion, `text-embedding-3-large` and answer prompt v2
+  adopted; query rewriting, section-header chunking and cross-encoder re-ranking rejected.
+  Open: BM25 + vector hybrid retrieval, a citation check (cited pages must be retrieved).
 - **Phase 4: LangGraph agent + tools + routing** (planned): including price data and technical
   indicators
 - **Phase 5: CI regression subset** (planned)
