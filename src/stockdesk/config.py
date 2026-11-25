@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     query_rewrite: Literal["none", "multi"] = "none"  # multi: LLM rewrites, fused with RRF
     n_rewrites: int = Field(default=3, ge=1)  # multi: rewritten queries per question
     rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries
+    answer_prompt: Literal["v1", "v2"] = "v1"  # prompts.ANSWER_PROMPTS; v2: figures, steps, Answer:
 
     @model_validator(mode="after")
     def check_consistency(self) -> "Settings":

@@ -67,3 +67,8 @@ DEFAULTS_011 = {
     "exclude_exhibits": True,
     "query_rewrite": "none",
 }
+
+
+def test_answer_prompt_defaults_to_v1_and_is_in_the_experiment_config():
+    assert settings().answer_prompt == "v1"
+    assert settings(answer_prompt="v2").experiment_config()["answer_prompt"] == "v2"

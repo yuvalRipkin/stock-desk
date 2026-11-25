@@ -127,3 +127,13 @@ def test_aggregate_skips_none_values():
 
     assert agg["latency_p50_ms"] == {"mean": 120.0, "std": 0.0}
     assert agg["accuracy"] == {"mean": None, "std": None}
+
+
+def test_summarize_run_averages_answer_chars_over_answered_questions():
+    records = [record(answer_chars=100), record(answer_chars=300), error_record()]
+
+    assert summarize_run(records)["avg_answer_chars"] == 200
+
+
+def test_summarize_run_answer_chars_missing_in_old_records():
+    assert summarize_run([record()])["avg_answer_chars"] is None

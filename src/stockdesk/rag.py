@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from stockdesk.config import get_settings
-from stockdesk.prompts import PROMPT
+from stockdesk.prompts import ANSWER_PROMPTS
 from stockdesk.retrieval import get_retriever
 
 
@@ -43,7 +43,7 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
     llm = ChatOpenAI(model=settings.llm_model, temperature=0, api_key=settings.openai_api_key)
     response = llm.invoke(
         [
-            SystemMessage(PROMPT),
+            SystemMessage(ANSWER_PROMPTS[settings.answer_prompt]),
             HumanMessage(f"Context:\n{build_context(docs)}\n\nQuestion: {question}"),
         ]
     )

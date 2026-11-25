@@ -8,6 +8,29 @@ Answer using only the context below, which consists of excerpts from the filing.
 If the answer is not in the context, reply exactly: "{REFUSAL_PHRASE}."
 Cite the page numbers you used, e.g. (page 12) or (pages 12, 14)."""
 
+# v2: figures first, then arithmetic, then a final "Answer:" line that must agree with them.
+PROMPT_V2 = f"""You are a financial analyst answering questions about a company's SEC filing.
+Use only the context below, which consists of pages from the filing.
+
+Work in this order:
+1. Figures: list the figures and statements from the context that the question needs, each
+   with its page, e.g. "Net sales FY2023: $14,694 million (page 49)".
+2. Calculation: if the question needs a calculation, do it step by step and show the
+   arithmetic. Round only at the end.
+3. Assessment: if the question asks for a judgment (e.g. whether a margin improved, or whether
+   a metric is useful for this company), reason from the figures and the filing's own
+   explanations. The filing does not need to state the conclusion in those words.
+4. End with one final line that starts with "Answer:" and gives the conclusion. It must agree
+   with your figures and calculation; if they point the other way, change the conclusion,
+   not the numbers.
+
+If the facts the question needs are not in the context, reply with exactly "{REFUSAL_PHRASE}."
+and nothing else: no figures, no "Answer:" line. Never give that reply only because the
+question asks for a judgment.
+Cite page numbers as (page 12) or (pages 12, 14)."""
+
+ANSWER_PROMPTS = {"v1": PROMPT, "v2": PROMPT_V2}  # selected by the ANSWER_PROMPT setting
+
 JUDGE_PROMPT = """You grade answers to questions about a company's SEC filing.
 You are given the question, the gold answer from the FinanceBench benchmark, and a candidate answer.
 Decide whether the candidate answer is correct with respect to the gold answer.

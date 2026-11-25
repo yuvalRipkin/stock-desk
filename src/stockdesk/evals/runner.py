@@ -38,6 +38,7 @@ SUMMARY_METRICS = [
     "refusal_rate",
     "avg_distinct_pages",
     "avg_context_chars",
+    "avg_answer_chars",
     "latency_p50_ms",
     "latency_p95_ms",
     "error_count",
@@ -62,6 +63,7 @@ class QuestionRecord:
     latency_ms: float | None  # latency of rag.answer() only
     error: str | None
     queries: list[str] | None = None  # searched: the question, then any rewrites; None pre-008
+    answer_chars: int | None = None  # length of the answer; None pre-012
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -87,9 +89,9 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
     """Summary metrics for one run.
 
     Rates (accuracy, hit rates, refusal rate) are over ALL questions, so an errored question
-    counts as incorrect and as a miss. Averages (distinct pages, context chars) and latency
-    percentiles are over questions that got an answer, since errored ones have no retrieval
-    or latency.
+    counts as incorrect and as a miss. Averages (distinct pages, context and answer chars) and
+    latency percentiles are over questions that got an answer, since errored ones have no
+    retrieval or latency.
     """
     n = len(records)
     ok = [r for r in records if r.error is None]
@@ -106,6 +108,7 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
         "refusal_rate": rate("refusal"),
         "avg_distinct_pages": statistics.mean(r.distinct_pages for r in ok) if ok else None,
         "avg_context_chars": mean_or_none([r.context_chars for r in ok]),
+        "avg_answer_chars": mean_or_none([r.answer_chars for r in ok]),
         "latency_p50_ms": percentile(latencies, 50),
         "latency_p95_ms": percentile(latencies, 95),
         "error_count": n - len(ok),
@@ -159,6 +162,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
 
     pages = [d.metadata["page"] for d in result.docs]
     record.answer = result.answer
+    record.answer_chars = len(result.answer)
     record.queries = result.queries
     record.retrieved_pages = pages
     record.page_hit = page_hit(pages, case.evidence_pages)
