@@ -48,3 +48,17 @@ def test_retries_5xx_with_backoff_then_saves(
     assert session.get.call_count == 3
     assert [c.args[0] for c in sleep.call_args_list] == [1.0, 2.0]
     assert list(tmp_path.iterdir()) == [dest]  # no leftover temp file
+
+
+def test_build_test_manifest_holds_out_every_non_dev_doc(fetch_data, tmp_path: Path):
+    questions = tmp_path / "q.jsonl"
+    rows = ["DEV_A", "TEST_B", "TEST_B", "DEV_A", "TEST_A"]
+    questions.write_text("".join(f'{{"doc_name": "{d}"}}\n' for d in rows))
+    out = tmp_path / "data_manifest_test.txt"
+
+    names = fetch_data.build_test_manifest(questions, ["DEV_A"], out)
+
+    assert names == ["TEST_A", "TEST_B"]  # sorted, deterministic, no dev docs
+    text = out.read_text()
+    assert "TEST_B  # 2 questions" in text
+    assert "DEV_A" not in text

@@ -70,6 +70,16 @@ make eval NAME=001_naive_1000          # 3 runs by default
 make eval NAME=002_my_change RUNS=1    # a quicker single run
 ```
 
+**Splits.** `dev` (default) is the 30 questions on the 5 filings in `data_manifest.txt`; every
+experiment above was tuned on it. `test` is the other 120 FinanceBench questions, on 79 filings
+listed in `data_manifest_test.txt` (10-Ks, 10-Qs, 8-Ks, earnings releases), held out for a final
+check. The split is recorded in each results file.
+
+```bash
+make fetch SPLIT=test && make ingest SPLIT=test   # ~10,800 pages, ~50,000 chunks
+make eval NAME=013_test_final SPLIT=test
+```
+
 Each run answers all 30 questions with `stockdesk.rag.answer`, then:
 
 - **Accuracy:** an LLM judge (`JUDGE_MODEL`, default `gpt-5.4`, stronger than the answering

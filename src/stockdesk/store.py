@@ -1,5 +1,6 @@
 """PGVector store shared by ingestion, retrieval and evals."""
 
+import re
 from functools import cache
 
 import sqlalchemy as sa
@@ -17,6 +18,29 @@ def metadata_columns() -> list[Column]:
     if get_settings().chunking == "plain":
         return METADATA_COLUMNS
     return [*METADATA_COLUMNS, SECTION_COLUMN]
+
+
+TABLE_NAME = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")  # interpolated into SQL, so kept strict
+
+
+def filter_index_sql(table: str) -> str:
+    """DDL for the btree index that filters by filing and page use.
+
+    Search is exact (no vector index), so without it every query computes distances for every
+    row in the table; with it, only the filing's rows.
+    """
+    if not TABLE_NAME.match(table):
+        raise ValueError(f"invalid TABLE name {table!r}: use lowercase letters, digits and _")
+    return f'CREATE INDEX IF NOT EXISTS "{table}_doc_name_page_idx" ON "{table}" (doc_name, page)'
+
+
+def ensure_filter_index(database_url: str, table: str) -> None:
+    engine = sa.create_engine(database_url)
+    try:
+        with engine.begin() as conn:
+            conn.execute(sa.text(filter_index_sql(table)))
+    finally:
+        engine.dispose()
 
 
 class DimensionMismatch(RuntimeError):
@@ -67,6 +91,7 @@ def get_store() -> PGVectorStore:
     except Exception as e:
         if "already exists" not in str(e):
             raise
+    ensure_filter_index(settings.database_url, settings.table)
     return PGVectorStore.create_sync(
         engine=engine,
         table_name=settings.table,

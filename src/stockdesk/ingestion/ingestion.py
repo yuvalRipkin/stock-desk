@@ -6,6 +6,7 @@ prepends "[<section>]" to each chunk's text before embedding. That header only a
 the expand retriever sends the model full page text from the PDF.
 """
 
+import argparse
 import uuid
 from collections import defaultdict
 
@@ -14,7 +15,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 from stockdesk.config import get_settings
-from stockdesk.data import PDF_DIR, read_manifest
+from stockdesk.data import PDF_DIR, SPLITS, split_doc_names
 from stockdesk.ingestion.sections import split_sections
 from stockdesk.store import get_store
 
@@ -90,12 +91,18 @@ def chunk_ids(chunks: list[Document]) -> list[str]:
     return ids
 
 
-def main() -> None:
-    """Ingest every filing in data_manifest.txt into the configured vector store table."""
+def main(argv: list[str] | None = None) -> None:
+    """Ingest every filing of a split into the configured vector store table."""
+    parser = argparse.ArgumentParser(description="Chunk, embed and store a split's filings.")
+    parser.add_argument("--split", choices=SPLITS, default="dev", help="default: dev")
+    args = parser.parse_args(argv)
     settings = get_settings()
-    print(f"table {settings.table}, chunking {settings.chunking}")
+    names = split_doc_names(args.split)
+    print(
+        f"table {settings.table}, chunking {settings.chunking}, {args.split}: {len(names)} filings"
+    )
     store = get_store()
-    for name in read_manifest():
+    for name in names:
         chunks = chunk_filing(name)
         store.add_documents(chunks, ids=chunk_ids(chunks))
         print(f"{name}: {len(chunks)} chunks")

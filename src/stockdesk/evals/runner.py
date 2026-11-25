@@ -1,7 +1,7 @@
 """Run the FinanceBench eval and save the results to results/<name>.json.
 
 Usage:
-    uv run python -m stockdesk.evals.runner --name 001_naive_1000 [--runs 3] [--force]
+    uv run python -m stockdesk.evals.runner --name 001_naive_1000 [--runs 3] [--split dev] [--force]
 
 Questions run sequentially. A failing question is recorded with its error and the run continues.
 """
@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from stockdesk.config import get_settings
-from stockdesk.data import ROOT
+from stockdesk.data import ROOT, SPLITS
 from stockdesk.evals.dataset import EvalCase, load_cases
 from stockdesk.evals.judge import judge
 from stockdesk.evals.metrics import (
@@ -210,6 +210,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the FinanceBench eval.")
     parser.add_argument("--name", required=True, help="experiment name, e.g. 001_naive_1000")
     parser.add_argument("--runs", type=int, default=3, help="number of runs (default 3)")
+    parser.add_argument(
+        "--split", choices=SPLITS, default="dev", help="dev (tuning, default), test (held out), all"
+    )
     parser.add_argument("--force", action="store_true", help="overwrite an existing results file")
     args = parser.parse_args(argv)
     if args.runs < 1:
@@ -227,7 +230,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"config: {json.dumps(config, indent=2)}")
     started = datetime.now(UTC)
     git = git_state()
-    cases = load_cases()
+    cases = load_cases(split=args.split)
+    print(f"split: {args.split} ({len(cases)} questions)")
     runs = []
     for run_idx in range(1, args.runs + 1):
         records = []
@@ -249,6 +253,7 @@ def main(argv: list[str] | None = None) -> int:
         "config": config,
         "metrics_version": METRICS_VERSION,
         "git": git,
+        "split": args.split,
         "n_cases": len(cases),
         "n_runs": args.runs,
         "aggregate": aggregate_stats,
@@ -260,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
     tmp.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
     tmp.replace(out_path)
 
-    print(f"\n{args.name}: {len(cases)} cases x {args.runs} runs (mean ± std)")
+    print(f"\n{args.name}: {args.split}, {len(cases)} cases x {args.runs} runs (mean ± std)")
     for metric in SUMMARY_METRICS:
         print(f"  {metric:<20} {format_metric(aggregate_stats[metric])}")
     if git["dirty"]:

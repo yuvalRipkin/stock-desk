@@ -3,7 +3,7 @@
 import json
 from dataclasses import dataclass
 
-from stockdesk.data import QUESTIONS_FILE, read_manifest
+from stockdesk.data import QUESTIONS_FILE, split_doc_names
 
 
 @dataclass(frozen=True)
@@ -16,9 +16,13 @@ class EvalCase:
     evidence_texts: list[str]
 
 
-def load_cases(doc_names: list[str] | None = None) -> list[EvalCase]:
-    """Return cases for `doc_names` (default: filings in data_manifest.txt), sorted by id."""
-    wanted = set(doc_names if doc_names is not None else read_manifest())
+def load_cases(doc_names: list[str] | None = None, split: str = "dev") -> list[EvalCase]:
+    """Return cases for `doc_names`, or else for the split's filings, sorted by id.
+
+    Splits are by filing: dev is the 30 questions on data_manifest.txt's filings (used for
+    tuning), test the other 120 (held out).
+    """
+    wanted = set(doc_names if doc_names is not None else split_doc_names(split))
     cases = []
     for line in QUESTIONS_FILE.read_text().splitlines():
         if not line.strip():
