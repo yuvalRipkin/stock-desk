@@ -116,3 +116,11 @@ changes are judged by evidence hit.
 - **Result:** accuracy 73.3% vs 67.8% (+5.5, within the ±7 noise floor but consistent: 6 questions up, 2 down), identical retrieval, refusals 4.4% (metrics v3; 4 refusals hid behind an "Answer:" line), answers ~1,170 chars, p50 latency 1.2 → 1.9 s. A number-by-number check of wrong answers without gold evidence found no fabricated figures.
 - **Decision:** adopted; now the default. Known cost: overconfidence when a key page is missing (00678, Boeing gross margin: income statement not retrieved, concluded from program margins; 1/3 → 0/3).
 - **Example:** 00723 (AmEx operating margin, a judgment question): refused 3/3 in 011, correct 2/3 in 012 ("not the right metric for a spend-centric business").
+
+## 013 / 014: held-out test
+
+- **Split rule:** split by filing. Dev (5 filings, 30 questions) was used for every decision above; test (79 filings, 120 questions, `data_manifest_test.txt`) is for final measurement only, never for decisions.
+- **Change:** none. Day-1 config (001: naive, k=5, 3-small, prompt v1) as 014 vs final config (012) as 013, both on `--split test`, 3 runs.
+- **Result:** accuracy 38.1% ± 1.3 → 71.9% ± 1.7 (+33.8; dev gain was +34.4), evidence hit 47.5% → 79.2%, page hit 53.3% → 79.2%, refusals 40.0% → 5.0%, context 4.5k → 15.5k chars. Latency not compared: the two runs ran in parallel.
+- **Decision:** the tuning generalizes. Retrieval is filtered to the question's filing (single-document setting), so results are not directly comparable to shared-store FinanceBench numbers.
+- **Setup notes:** some test PDFs are AES-encrypted and need `pypdf[crypto]`; 14 PDFs have empty pages (63 in all, no gold pages); the exhibit cutoff was found in 29 of 79 filings (nothing is excluded in the rest). A btree index on `(doc_name, page)` cut per-query execution from ~50–62 ms to ~7–14 ms at 54,666 rows.

@@ -105,7 +105,23 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 
 ## Results
 
-30 FinanceBench questions over 5 filings, 3 runs. Values are mean ± std across runs.
+### Held-out test (120 questions, 79 filings)
+
+3 runs, mean ± std. Day-1 config (001) vs final config (012), both run once on the test split.
+
+| Run | Config | Accuracy | Page hit | Evidence hit | Refusal | Context chars |
+|---|---|---|---|---|---|---|
+| [014_test_baseline](results/014_test_baseline.json) | 001: naive, k=5, 3-small, prompt v1 | 38.1% ± 1.3 | 53.3% | 47.5% | 40.0% ± 1.7 | 4.5k |
+| [013_test_final](results/013_test_final.json) | 012: expand, k=10, 5 pages, no exhibits, 3-large, prompt v2 | 71.9% ± 1.7 | 79.2% | 79.2% | 5.0% ± 0.8 | 15.5k |
+
++33.8 points on unseen questions, matching the dev gain (+34.4), so the tuning generalizes.
+Latency is left out: the two runs ran in parallel, which inflated it. Retrieval is filtered to
+the question's filing (single-document setting), so these numbers are not directly comparable
+to FinanceBench results over a shared store of all filings.
+
+### Experiments (dev: 30 questions, 5 filings)
+
+3 runs. Values are mean ± std across runs.
 
 | Experiment | Retriever | Chunking | k | Accuracy | Page hit | Evidence hit | Refusal | Latency p50 / p95 |
 |---|---|---|---|---|---|---|---|---|
