@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     judge_model: str = "gpt-5.4"  # grades answers; stronger than llm_model on purpose
     chunk_size: int = 1000
     chunk_overlap: int = 200
+    chunking: Literal["plain", "section_header"] = "plain"  # section_header: see ingestion
     retrieval_k: int = 5
     retriever: Literal["naive", "expand"] = "naive"
     max_pages: int = Field(default=5, ge=1)  # expand: full pages sent to the LLM

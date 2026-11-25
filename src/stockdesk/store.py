@@ -8,6 +8,14 @@ from langchain_postgres import Column, PGEngine, PGVectorStore
 from stockdesk.config import get_settings
 
 METADATA_COLUMNS = [Column("doc_name", "TEXT"), Column("page", "INTEGER")]
+SECTION_COLUMN = Column("section", "TEXT")  # only in tables built with section chunking
+
+
+def metadata_columns() -> list[Column]:
+    """The metadata columns of the configured table, which depend on CHUNKING."""
+    if get_settings().chunking == "plain":
+        return METADATA_COLUMNS
+    return [*METADATA_COLUMNS, SECTION_COLUMN]
 
 
 @cache
@@ -19,7 +27,7 @@ def get_store() -> PGVectorStore:
         engine.init_vectorstore_table(
             table_name=settings.table,
             vector_size=settings.embedding_dim,
-            metadata_columns=METADATA_COLUMNS,
+            metadata_columns=metadata_columns(),
         )
     except Exception as e:
         if "already exists" not in str(e):
@@ -30,5 +38,5 @@ def get_store() -> PGVectorStore:
         embedding_service=OpenAIEmbeddings(
             model=settings.embedding_model, api_key=settings.openai_api_key
         ),
-        metadata_columns=[c.name for c in METADATA_COLUMNS],
+        metadata_columns=[c.name for c in metadata_columns()],
     )

@@ -83,3 +83,12 @@ changes are judged by evidence hit.
 - **Result:** evidence hit 64.4% ± 6.9 (no gain); retrieval varies by run (5/30 stable vs 30/30); p50 latency 3x.
 - **Decision:** rejected; `QUERY_REWRITE` stays `none`. If revisited, cache rewrites so runs are deterministic.
 - **Example:** 01964 (AmEx largest liability): good rewrites, same pages as 007; gold page 97 still never ranks.
+
+## 009: section-header chunking
+
+- **Hypothesis:** chunks that carry their 10-K section ("Consolidated Balance Sheets") rank for questions phrased by statement.
+- **Change:** `CHUNKING=section_header`: pages also split at section headings; `[<SEC Item> > <statement>]` prepended before embedding (table `section_hdr_1000`).
+- **Result:** pending.
+- **Decision:** pending. 009a (boundaries only) was skipped: it changes only 34 of 1,229 pages and 3 gold pages, none of them page 97.
+- **Example:** 01964 (AmEx largest liability): gold page 97 is one section, Item 8 > Consolidated Balance Sheets.
+- **Known quirk:** PepsiCo prints its statements inside Item 7, so they are labeled under Item 7, as filed.

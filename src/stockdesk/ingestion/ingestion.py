@@ -1,4 +1,10 @@
-"""Load manifest PDFs, split them into chunks and write them to the vector store."""
+"""Load manifest PDFs, split them into chunks and write them to the vector store.
+
+CHUNKING=plain splits each page on its own. CHUNKING=section_header also splits a page at 10-K
+section headings, so no chunk crosses a section, stores the section in a "section" column, and
+prepends "[<section>]" to each chunk's text before embedding. That header only affects search:
+the expand retriever sends the model full page text from the PDF.
+"""
 
 import uuid
 from collections import defaultdict
@@ -9,6 +15,7 @@ from pypdf import PdfReader
 
 from stockdesk.config import get_settings
 from stockdesk.data import PDF_DIR, read_manifest
+from stockdesk.ingestion.sections import split_sections
 from stockdesk.store import get_store
 
 
@@ -23,13 +30,52 @@ def load_pdf(doc_name: str) -> list[Document]:
     return docs
 
 
-def split(docs: list[Document]) -> list[Document]:
-    """Split pages into chunks of CHUNK_SIZE characters with CHUNK_OVERLAP, keeping metadata."""
+def splitter() -> RecursiveCharacterTextSplitter:
     settings = get_settings()
-    splitter = RecursiveCharacterTextSplitter(
+    return RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap
     )
-    return splitter.split_documents(docs)
+
+
+def split(docs: list[Document]) -> list[Document]:
+    """Split pages into chunks of CHUNK_SIZE characters with CHUNK_OVERLAP, keeping metadata."""
+    return splitter().split_documents(docs)
+
+
+def split_with_section_headers(
+    docs: list[Document], exhibit_cutoff: int | None = None
+) -> list[Document]:
+    """Split one filing's pages at section headings, then into chunks; prepend "[<section>]".
+
+    Chunks are CHUNK_SIZE characters before the header is added.
+    """
+    if not docs:
+        return []
+    doc_name = docs[0].metadata["doc_name"]
+    pages = {d.metadata["page"]: d.page_content for d in docs}
+    chunks = []
+    for page, segments in split_sections(pages, exhibit_cutoff).items():
+        for section, text in segments:
+            for piece in splitter().split_text(text):
+                chunks.append(
+                    Document(
+                        page_content=f"[{section}]\n{piece}",
+                        metadata={"doc_name": doc_name, "page": page, "section": section},
+                    )
+                )
+    return chunks
+
+
+def chunk_filing(doc_name: str) -> list[Document]:
+    """Load and chunk one filing according to CHUNKING."""
+    docs = load_pdf(doc_name)
+    if get_settings().chunking == "plain":
+        return split(docs)
+    # imported here: retrieval.pages imports this module
+    from stockdesk.retrieval.exhibits import find_exhibit_cutoff
+
+    cutoff = find_exhibit_cutoff({d.metadata["page"]: d.page_content for d in docs})
+    return split_with_section_headers(docs, cutoff)
 
 
 def chunk_ids(chunks: list[Document]) -> list[str]:
@@ -46,9 +92,11 @@ def chunk_ids(chunks: list[Document]) -> list[str]:
 
 def main() -> None:
     """Ingest every filing in data_manifest.txt into the configured vector store table."""
+    settings = get_settings()
+    print(f"table {settings.table}, chunking {settings.chunking}")
     store = get_store()
     for name in read_manifest():
-        chunks = split(load_pdf(name))
+        chunks = chunk_filing(name)
         store.add_documents(chunks, ids=chunk_ids(chunks))
         print(f"{name}: {len(chunks)} chunks")
 

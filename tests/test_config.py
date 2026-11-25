@@ -31,3 +31,8 @@ def test_rewrite_settings_are_in_the_experiment_config():
     assert config["query_rewrite"] == "multi"
     assert config["n_rewrites"] == 4
     assert config["rewrite_model"] == "gpt-5.4-mini"
+
+
+def test_chunking_defaults_to_plain_and_is_in_the_experiment_config():
+    assert settings().chunking == "plain"
+    assert settings(chunking="section_header").experiment_config()["chunking"] == "section_header"
