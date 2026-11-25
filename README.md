@@ -170,16 +170,14 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 ## Roadmap
 
 - **Phase 1: Ingestion + baseline RAG** (done)
-- **Phase 2: FinanceBench evals** (done: runner, metrics, LLM judge, naive baseline, held-out
-  test split)
-- **Phase 3: Retrieval and answer tuning** (done: experiments 002–012; held-out accuracy 38.1%
-  → 71.9%). Page expansion, exhibit exclusion, `text-embedding-3-large` and answer prompt v2
-  adopted; query rewriting, section-header chunking and cross-encoder re-ranking rejected.
-  Open: BM25 + vector hybrid retrieval, a citation check (cited pages must be retrieved).
-- **Phase 4: LangGraph agent + tools + routing** (planned): including price data and technical
-  indicators
-- **Phase 5: CI regression subset** (planned)
-- **Phase 6: Tracing, caching, cost/latency** (planned): OpenTelemetry / Arize Phoenix
+- **Phase 2: Retrieval and eval** (done): eval runner, metrics, LLM judge, experiments 001–012,
+  and the held-out evaluation (accuracy 38.1% → 71.9% on 120 unseen questions).
+  - Optional last retrieval experiment: BM25 + vector hybrid with RRF, on the dev split only.
+- **Phase 3: LangGraph agent** (planned): `search_filings` as a tool, `calculate`, multi-step
+  retrieval. Developed on dev, measured once on test.
+- **Phase 4: Eval quality** (planned): judge validation against human labels, an automated
+  citation check (do the cited pages contain the stated figures), eval in CI.
+- **Phase 5: Observability and UI** (planned): tracing, cost per question, Gradio UI.
 
 ## License
 
