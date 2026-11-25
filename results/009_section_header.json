@@ -1,0 +1,2456 @@
+{
+  "name": "009_section_header",
+  "timestamp": "2026-11-25T09:33:55.477020+00:00",
+  "config": {
+    "table": "section_hdr_1000",
+    "embedding_model": "text-embedding-3-small",
+    "embedding_dim": 1536,
+    "llm_model": "gpt-5.4-mini",
+    "judge_model": "gpt-5.4",
+    "chunk_size": 1000,
+    "chunk_overlap": 200,
+    "chunking": "section_header",
+    "retrieval_k": 10,
+    "retriever": "expand",
+    "max_pages": 5,
+    "exclude_exhibits": true,
+    "query_rewrite": "none",
+    "n_rewrites": 3,
+    "rewrite_model": "gpt-5.4-mini"
+  },
+  "metrics_version": 2,
+  "git": {
+    "commit": "977579e360aa3039fd6fd27edf8d6d5429a683c7",
+    "dirty": false
+  },
+  "n_cases": 30,
+  "n_runs": 3,
+  "aggregate": {
+    "accuracy": {
+      "mean": 0.4888888888888889,
+      "std": 0.01924500897298752
+    },
+    "page_hit_rate": {
+      "mean": 0.6,
+      "std": 0.0
+    },
+    "evidence_hit_rate": {
+      "mean": 0.6333333333333333,
+      "std": 0.0
+    },
+    "refusal_rate": {
+      "mean": 0.26666666666666666,
+      "std": 0.033333333333333326
+    },
+    "avg_distinct_pages": {
+      "mean": 5,
+      "std": 0.0
+    },
+    "avg_context_chars": {
+      "mean": 15959,
+      "std": 0.0
+    },
+    "latency_p50_ms": {
+      "mean": 1101.3692500055186,
+      "std": 36.09691766584336
+    },
+    "latency_p95_ms": {
+      "mean": 3820.07538038403,
+      "std": 3802.918820578135
+    },
+    "error_count": {
+      "mean": 0,
+      "std": 0.0
+    }
+  },
+  "runs": [
+    {
+      "summary": {
+        "n": 30,
+        "accuracy": 0.5,
+        "page_hit_rate": 0.6,
+        "evidence_hit_rate": 0.6333333333333333,
+        "refusal_rate": 0.26666666666666666,
+        "avg_distinct_pages": 5,
+        "avg_context_chars": 15959,
+        "latency_p50_ms": 1121.163271003752,
+        "latency_p95_ms": 8209.0492142539,
+        "error_count": 0
+      },
+      "records": [
+        {
+          "id": "financebench_id_00222",
+          "doc_name": "AMD_2022_10K",
+          "question": "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why.",
+          "gold_answer": "Yes. The quick ratio is 1.57, calculated as (cash and cash equivalents+Short term investments+Accounts receivable, net+receivables from related parties)/ (current liabilities).",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            3,
+            4,
+            105,
+            40,
+            42
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 19163,
+          "latency_ms": 8433.487333008088,
+          "error": null,
+          "queries": [
+            "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00464",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Is Boeing's business subject to cyclicality?",
+          "gold_answer": "Yes, Boeing's business is subject to cyclicality due to its exposure to the airline industry which is a cyclical industry.",
+          "answer": "Yes. The filing says the airline industry has been \u201ccyclical and very competitive,\u201d and that market conditions significantly affect demand for Boeing\u2019s commercial aircraft and services (page 6).",
+          "retrieved_pages": [
+            62,
+            21,
+            29,
+            7,
+            18
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer by stating Boeing is subject to cyclicality because of its exposure to the cyclical airline industry.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17946,
+          "latency_ms": 7278.997667002841,
+          "error": null,
+          "queries": [
+            "Is Boeing's business subject to cyclicality?"
+          ]
+        },
+        {
+          "id": "financebench_id_00476",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Which debt securities are registered to trade on a national securities exchange under American Express' name as of 2022?",
+          "gold_answer": "There are none",
+          "answer": "Common Shares (par value $0.20 per share) are registered to trade on the New York Stock Exchange under American Express\u2019 name as of 2022. (page 0)",
+          "retrieved_pages": [
+            68,
+            161,
+            125,
+            67,
+            0
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer states that no debt securities are registered, while the candidate incorrectly names common shares, which are equity and not debt securities.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14835,
+          "latency_ms": 10896.940750011709,
+          "error": null,
+          "queries": [
+            "Which debt securities are registered to trade on a national securities exchange under American Express' name as of 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_00494",
+          "doc_name": "BOEING_2022_10K",
+          "question": "What production rate changes is Boeing forecasting for FY2023?",
+          "gold_answer": "Boeing forecasts an increase in the production rates for the 737, 777X and 787 aircrafts in 2023.",
+          "answer": "Boeing says the 787 program is \u201ccurrently producing at low rates\u201d and expects to \u201cgradually return to 5 per month in 2023.\u201d For the 737 program, it increased production to 31 per month in 2022 and expects to \u201cimplement further gradual production rate increases based on market demand and supply chain capacity.\u201d It also says production of the 777X is currently paused and is \u201cexpected to resume in 2023.\u201d (pages 8, 32, 34, 49)",
+          "retrieved_pages": [
+            32,
+            34,
+            115,
+            8,
+            50
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly states that Boeing expects production rate increases or resumptions in 2023 for the 737, 777X, and 787 programs, matching the gold answer.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17221,
+          "latency_ms": 1158.9299170009326,
+          "error": null,
+          "queries": [
+            "What production rate changes is Boeing forecasting for FY2023?"
+          ]
+        },
+        {
+          "id": "financebench_id_00517",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?",
+          "gold_answer": "Yes. Boeing has product and service categories that represent more than 20% of Boeing's revenue for FY2022. These categories are Commercial Airplanes which comprises 39% of total revenue, Defence which comprises 35% of total revenue and Services which comprises 26% of total revenue.",
+          "answer": "Yes. In FY2022, two categories each represented more than 20% of Boeing\u2019s total revenue:\n\n- Commercial Airplanes: $25,867 million, about 38.8% of total revenues\n- Defense, Space & Security: $23,162 million, about 34.7% of total revenues\n\nGlobal Services was about 26.4%, and Boeing Capital was below 1%. (pages 58, 61)",
+          "retrieved_pages": [
+            61,
+            54,
+            23,
+            21,
+            62
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly says yes and identifies the categories over 20% with percentages matching the gold answer within rounding, also noting Global Services at about 26.4%, which is consistent with the gold answer's Services category.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12723,
+          "latency_ms": 1255.2564579964383,
+          "error": null,
+          "queries": [
+            "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_00563",
+          "doc_name": "AMD_2022_10K",
+          "question": "From FY21 to FY22, excluding Embedded, in which AMD reporting segment did sales proportionally increase the most?",
+          "gold_answer": "Data Center",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            42,
+            5,
+            66,
+            8,
+            47
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 19361,
+          "latency_ms": 1020.8022920123767,
+          "error": null,
+          "queries": [
+            "From FY21 to FY22, excluding Embedded, in which AMD reporting segment did sales proportionally increase the most?"
+          ]
+        },
+        {
+          "id": "financebench_id_00585",
+          "doc_name": "BOEING_2022_10K",
+          "question": "How does Boeing's effective tax rate in FY2022 compare to FY2021?",
+          "gold_answer": "Effective tax rate in FY2022 was 0.62%, compared to  -14.76% in FY2021.",
+          "answer": "Boeing\u2019s effective income tax rate decreased from 14.8% in FY2021 to (0.6)% in FY2022, a decline of 15.4 percentage points. (page 23)",
+          "retrieved_pages": [
+            26,
+            23,
+            54,
+            42,
+            61
+          ],
+          "correct": false,
+          "judge_reason": "The candidate reverses the signs and direction: the gold answer says FY2022 was +0.62% versus FY2021 at -14.76%, not 14.8% to -0.6%.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12512,
+          "latency_ms": 1083.3966250065714,
+          "error": null,
+          "queries": [
+            "How does Boeing's effective tax rate in FY2022 compare to FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_00678",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Does Boeing have an improving gross margin profile as of FY2022? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "Yes. Boeing has an improving gross margin profile as of FY2022. Gross profit improved from $3,017 million in FY2021 to $3,502 million in FY2022. Gross margin % improved from 4.8% in FY2021 to 5.3% in FY2022.",
+          "answer": "Boeing does not disclose gross margin as a primary operating metric in the provided filing excerpts, so gross margin is not the most useful measure here. For a company like Boeing, management instead emphasizes segment revenues, loss from operations, and operating margins, because results are heavily affected by program accounting, long-term contracts, and large charges/reach-forward losses that can distort a simple gross margin view. In FY2022, Boeing\u2019s overall operating margin was still negative, though improved from 2021: operating margin was (5.3)% in 2022 versus (4.7)% in 2021, while total revenues increased to $66.6 billion from $62.3 billion. However, the company still reported a loss from operations of $3.547 billion in 2022. So, based on the filing, Boeing showed revenue growth, but not a clearly improving gross margin profile in the traditional sense. (pages 23, 24, 54, 61)",
+          "retrieved_pages": [
+            23,
+            26,
+            54,
+            61,
+            24
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer says Boeing\u2019s gross margin did improve in FY2022 (gross profit and gross margin both increased), while the candidate incorrectly claims gross margin is not useful here and denies a clearly improving gross margin profile.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 10899,
+          "latency_ms": 1554.4388339912985,
+          "error": null,
+          "queries": [
+            "Does Boeing have an improving gross margin profile as of FY2022? If gross margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00684",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "No. For AMCOR there has been a slight decline in gross margins by 0.8%.",
+          "answer": "No clear improving gross margin profile in FY2023. Gross margin declined from 19.4% in FY2022 to 18.5% in FY2023, as gross profit fell to $2,725 million from $2,820 million while sales rose slightly. That suggests margin pressure rather than improvement, likely reflecting higher input, energy, fuel, and labor costs and inflationary pressures. Gross margin is still a useful metric for Amcor because it is a packaging manufacturer, so gross profit helps indicate how well it manages raw material and production costs. (pages 28, 31, 49)",
+          "retrieved_pages": [
+            29,
+            31,
+            49,
+            34,
+            28
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly concludes that AMCOR did not have an improving gross margin profile in FY2023 and supports it with a gross margin decline of about 0.9 percentage points, which is consistent with the gold answer's slight 0.8% decline.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14786,
+          "latency_ms": 7934.735957998782,
+          "error": null,
+          "queries": [
+            "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00720",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What drove gross margin change as of the FY2022 for American Express? If gross margin is not a useful metric for a company like this, then please state that and explain why.",
+          "gold_answer": "Performance is not measured through gross margin",
+          "answer": "Gross margin is not a useful metric for American Express because the filing excerpt provided focuses on expenses and operating results, not gross profit from product sales. As a payments and financial services company, its economics are driven more by billed business, discount revenue, fees, interest income, and operating expenses than by a traditional cost of goods sold/gross margin structure. The filing instead highlights that expense changes in 2022 were driven by higher network volumes, higher usage of travel-related benefits, marketing investments, higher compensation costs, and net losses on Amex Ventures investments. (pages 45, 48, 63)",
+          "retrieved_pages": [
+            48,
+            84,
+            45,
+            63,
+            4
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly states that gross margin is not a meaningful metric for American Express and explains that, as a financial services company, performance is evaluated using other revenue and expense measures rather than gross profit.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17062,
+          "latency_ms": 1486.935834007454,
+          "error": null,
+          "queries": [
+            "What drove gross margin change as of the FY2022 for American Express? If gross margin is not a useful metric for a company like this, then please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00723",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Does AMEX have an improving operating margin profile as of 2022? If operating margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "Performance is not measured through operating margin",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            48,
+            44,
+            45,
+            63,
+            88
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 19728,
+          "latency_ms": 1032.4365420092363,
+          "error": null,
+          "queries": [
+            "Does AMEX have an improving operating margin profile as of 2022? If operating margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00735",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?",
+          "gold_answer": "No, Pepsico is not involved in material legal battles.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            31,
+            39,
+            52,
+            127,
+            108
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 17546,
+          "latency_ms": 5169.619374995818,
+          "error": null,
+          "queries": [
+            "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_00757",
+          "doc_name": "AMD_2022_10K",
+          "question": "Did AMD report customer concentration in FY22?",
+          "gold_answer": "Yes, one customer accounted for 16% of consolidated net revenue",
+          "answer": "Yes. AMD stated that \u201ca small number of customers will continue to account for a substantial part of AMD\u2019s revenue in the future,\u201d which indicates customer concentration in FY22 (page 3).",
+          "retrieved_pages": [
+            4,
+            47,
+            3,
+            42,
+            43
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly concludes that AMD reported customer concentration in FY22, and its statement is compatible with the gold answer despite not citing the specific 16% figure.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 21000,
+          "latency_ms": 918.5900829907041,
+          "error": null,
+          "queries": [
+            "Did AMD report customer concentration in FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_00799",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why.",
+          "gold_answer": "The quick ratio has slightly improved from 0.67 times to 0.69 times between FY 2023 and FY 2022.(3.4% jump)",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            29,
+            31,
+            28,
+            34,
+            49
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 14786,
+          "latency_ms": 1073.097417000099,
+          "error": null,
+          "queries": [
+            "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00917",
+          "doc_name": "AMD_2022_10K",
+          "question": "What drove operating margin change as of the FY22 for AMD? If operating margin is not a useful metric for a company like this, then please state that and explain why.",
+          "gold_answer": "The decrease in AMD's operating income was primarily driven by amortization of intangible assets associated with the Xilinx acquisition",
+          "answer": "AMD\u2019s operating margin decline in FY22 was driven primarily by amortization of acquisition-related intangible assets associated with the Xilinx acquisition, which reduced operating income despite strong revenue growth. The filing says operating income for 2022 was $1.3 billion versus $3.6 billion in 2021, and specifically notes the decrease was primarily driven by amortization of intangible assets associated with the Xilinx acquisition. It also shows that operating expenses rose materially, including research and development and marketing, general and administrative expenses, and added amortization of acquisition-related intangibles. Net revenue increased to $23.6 billion from $16.4 billion, but operating income fell because of these acquisition-related costs and higher operating expenses. (pages 42, 47, 53)\n\nOperating margin is still a useful metric for AMD, because it reflects core profitability after operating costs, and the company clearly reports operating income and operating performance by segment and on a consolidated basis.",
+          "retrieved_pages": [
+            47,
+            4,
+            42,
+            3,
+            53
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly states that FY22 operating margin/operating income declined primarily because of amortization of intangible assets related to the Xilinx acquisition, which matches the gold answer.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 16836,
+          "latency_ms": 1603.7352499988629,
+          "error": null,
+          "queries": [
+            "What drove operating margin change as of the FY22 for AMD? If operating margin is not a useful metric for a company like this, then please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00995",
+          "doc_name": "AMD_2022_10K",
+          "question": "What are the major products and services that AMD sells as of FY22?",
+          "gold_answer": "AMD sells server microprocessors (CPUs) and graphics processing units (GPUs), data processing units (DPUs), Field Programmable Gate Arrays (FPGAs), and Adaptive System-on-Chip (SoC) products for data centers; CPUs, accelerated processing units (APUs) that integrate CPUs and GPUs, and chipsets for desktop and notebook personal computers; discrete GPUs, and semi-custom SoC products and development services; and embedded CPUs, GPUs, APUs, FPGAs, and Adaptive SoC products.",
+          "answer": "As of FY22, AMD primarily sells: server microprocessors (CPUs) and graphics processing units (GPUs), data processing units (DPUs), Field Programmable Gate Arrays (FPGAs), and Adaptive System-on-Chip (SoC) products for data centers; CPUs, accelerated processing units (APUs) that integrate CPUs and GPUs, and chipsets for desktop and notebook personal computers; discrete GPUs, and semi-custom SoC products and development services; and embedded CPUs, GPUs, APUs, FPGAs, and Adaptive SoC products. AMD also may sell or license portions of its intellectual property portfolio. (page 3)",
+          "retrieved_pages": [
+            4,
+            3,
+            10,
+            43,
+            42
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer's list of AMD's FY22 major products and services, with only an additional non-contradictory note about licensing intellectual property.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 22494,
+          "latency_ms": 1587.7313329983735,
+          "error": null,
+          "queries": [
+            "What are the major products and services that AMD sells as of FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_01009",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What are the geographies that Pepsico primarily operates in as of FY2022?",
+          "gold_answer": "As of FY2022, Pepsico primarily operates in the following geographies: North America, Latin America, Europe, Africa, Middle East, South Asia, Asia Pacific, Australia, New Zealand and China.",
+          "answer": "PepsiCo primarily operated in the United States and Canada, Latin America, Europe, Africa, the Middle East and South Asia, and Asia Pacific, Australia and New Zealand, and China region as of FY2022. It also noted its largest operations were in the United States, Mexico, Russia, Canada, China, the United Kingdom and South Africa. (pages 4, 68)",
+          "retrieved_pages": [
+            31,
+            3,
+            70,
+            68,
+            4
+          ],
+          "correct": true,
+          "judge_reason": "The candidate lists the same primary operating geographies as the gold answer, with only an added note about largest operations that does not contradict it.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 16331,
+          "latency_ms": 1728.6945419909898,
+          "error": null,
+          "queries": [
+            "What are the geographies that Pepsico primarily operates in as of FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01028",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What are the geographies that American Express primarily operates in as of 2022?",
+          "gold_answer": "United States, EMEA, APAC, and LACC",
+          "answer": "American Express primarily operates in the United States and outside the United States, with significant international jurisdictions including the United Kingdom, the European Union, Australia, Japan, Canada, and Mexico (page 4, page 152).",
+          "retrieved_pages": [
+            3,
+            5,
+            39,
+            4,
+            152
+          ],
+          "correct": false,
+          "judge_reason": "The candidate does not provide the filing\u2019s primary operating geographies of United States, EMEA, APAC, and LACC, instead giving a different split and examples of countries/jurisdictions.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12588,
+          "latency_ms": 993.1549999892013,
+          "error": null,
+          "queries": [
+            "What are the geographies that American Express primarily operates in as of 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01079",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?",
+          "gold_answer": "Amcor completed these acquisitions during FY2023:\n-100% equity interest of a flexibles manufacturing company in the Czech Republic\n- 100% equity interest in a medical device packaging manufacturing site in\nShanghai, China.\n-acquisition of a New Zealand-based leading manufacturer of state-of-the-art, automated protein\npackaging machines.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            29,
+            108,
+            31,
+            34,
+            49
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 14372,
+          "latency_ms": 886.8096670048544,
+          "error": null,
+          "queries": [
+            "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_01091",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Has Boeing reported any materially important ongoing legal battles from FY2022?",
+          "gold_answer": "Yes. Multiple lawsuits have been filed against Boeing resulting from a 2018 Lion Air crash and a 2019 Ethiopian Airlines crash.",
+          "answer": "Yes. Boeing disclosed ongoing legal matters tied to the 737 MAX accidents and to its terminated Embraer joint venture agreements. For the 737 MAX matters, Boeing said it cannot reasonably estimate a range of loss, if any, for remaining pending lawsuits or other matters related to the accidents and the 737 MAX. For the Embraer dispute, Boeing said the arbitration is ongoing and it cannot reasonably estimate any loss that may result. (pages 112)",
+          "retrieved_pages": [
+            42,
+            112,
+            15,
+            3,
+            23
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly states that Boeing reported ongoing material legal matters related to the 737 MAX accidents, which matches the gold answer, and the added Embraer dispute does not contradict it.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 18393,
+          "latency_ms": 1310.0781250104774,
+          "error": null,
+          "queries": [
+            "Has Boeing reported any materially important ongoing legal battles from FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01148",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "What industry does AMCOR primarily operate in?",
+          "gold_answer": "Amcor is a global leader in packaging production for various use cases.",
+          "answer": "AMCOR primarily operates in the packaging industry, specifically developing and producing responsible packaging for food, beverage, pharmaceutical, medical, home and personal-care, and other products. (pages 29, 54, 5)",
+          "retrieved_pages": [
+            29,
+            54,
+            8,
+            10,
+            5
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies Amcor as operating primarily in the packaging industry, consistent with the gold answer, and its added details do not contradict it.",
+          "page_hit": false,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17223,
+          "latency_ms": 889.0310840070015,
+          "error": null,
+          "queries": [
+            "What industry does AMCOR primarily operate in?"
+          ]
+        },
+        {
+          "id": "financebench_id_01198",
+          "doc_name": "AMD_2022_10K",
+          "question": "What drove revenue change as of the FY22 for AMD?",
+          "gold_answer": "In 2022, AMD reported Higher sales of their EPYC server processors, higher semi-custom product sales, and the inclusion of Xilinx embedded product sales",
+          "answer": "AMD\u2019s FY22 net revenue increased 44% to $23.6 billion, driven by a 64% increase in Data Center segment revenue primarily from higher sales of EPYC server processors, a 21% increase in Gaming segment revenue primarily from higher semi-custom product sales, and a significant increase in Embedded segment revenue due to the inclusion of Xilinx embedded product sales. This was partly offset by a 10% decrease in Client segment revenue due to lower processor shipments from weak PC market conditions and inventory correction across the PC supply chain. (pages 42, 47, 53)",
+          "retrieved_pages": [
+            47,
+            42,
+            4,
+            43,
+            53
+          ],
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer\u2019s stated drivers of FY22 revenue change\u2014higher EPYC server processor sales, higher semi-custom product sales, and inclusion of Xilinx embedded product sales\u2014and any extra detail is consistent.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 18189,
+          "latency_ms": 1444.7490839957027,
+          "error": null,
+          "queries": [
+            "What drove revenue change as of the FY22 for AMD?"
+          ]
+        },
+        {
+          "id": "financebench_id_01279",
+          "doc_name": "AMD_2022_10K",
+          "question": "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?",
+          "gold_answer": "In 2022, AMD brought in the most cashflow from Operations",
+          "answer": "Operating activities brought in the most cash flow for AMD in FY22, providing $3.565 billion of net cash, compared with $1.999 billion from investing activities and a $3.264 billion use of cash in financing activities. (pages 51, 55)",
+          "retrieved_pages": [
+            51,
+            57,
+            53,
+            47,
+            58
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies operating activities as the source of the most cash flow in FY22, consistent with the gold answer.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 10963,
+          "latency_ms": 997.2222500073258,
+          "error": null,
+          "queries": [
+            "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_01290",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Who are the primary customers of Boeing as of FY2022?",
+          "gold_answer": "Boeing's primary customers as of FY2022 are a limited number of commercial airlines and the US government. The US government accounted for 40% of Boeing's total revenues in FY2022.",
+          "answer": "Boeing\u2019s primary customers are commercial airline customers and military/defense customers, as reflected in its core businesses of Commercial Airplanes and Defense, Space & Security, along with services customers for Global Services and selective financing customers for Boeing Capital. (page 21)",
+          "retrieved_pages": [
+            61,
+            54,
+            21,
+            23,
+            4
+          ],
+          "correct": false,
+          "judge_reason": "The candidate generally identifies commercial and defense customers but does not state the gold answer\u2019s key point that the U.S. government is a primary customer and accounted for 40% of FY2022 revenues, and it adds other customer categories not in the gold answer.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 13376,
+          "latency_ms": 1187.5750420003897,
+          "error": null,
+          "queries": [
+            "Who are the primary customers of Boeing as of FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01328",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the quantity of restructuring costs directly outlined in Pepsico's income statements for FY2022? If restructuring costs are not explicitly outlined then state 0.",
+          "gold_answer": "Pepsico's restructuring costs in FY2022 amounted to $411 million .",
+          "answer": "0 (pages 48, 77)",
+          "retrieved_pages": [
+            77,
+            48,
+            108,
+            71,
+            78
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer states PepsiCo explicitly reported $411 million of restructuring costs in FY2022, whereas the candidate incorrectly answered 0.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 13383,
+          "latency_ms": 995.0858329975745,
+          "error": null,
+          "queries": [
+            "What is the quantity of restructuring costs directly outlined in Pepsico's income statements for FY2022? If restructuring costs are not explicitly outlined then state 0."
+          ]
+        },
+        {
+          "id": "financebench_id_01351",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "How much has the effective tax rate of American Express changed between FY2021 and FY2022?",
+          "gold_answer": "The effective tax rate for American Express has changed/dropped from 24.6% in FY 2021 to 21.6% in FY 2022.",
+          "answer": "The effective tax rate decreased by 3.0 percentage points, from 24.6% in 2021 to 21.6% in 2022. (page 48)",
+          "retrieved_pages": [
+            48,
+            162,
+            98,
+            149,
+            40
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer exactly, stating the effective tax rate fell from 24.6% in FY2021 to 21.6% in FY2022, a decrease of 3.0 percentage points.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14818,
+          "latency_ms": 922.2706250002375,
+          "error": null,
+          "queries": [
+            "How much has the effective tax rate of American Express changed between FY2021 and FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01964",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What was the largest liability in American Express's Balance Sheet in 2022?",
+          "gold_answer": "Customer deposits",
+          "answer": "The filing does not provide a balance sheet liability breakdown by category in the excerpts, so the largest liability in 2022 is **not found in the filing**.",
+          "retrieved_pages": [
+            125,
+            151,
+            138,
+            124,
+            98
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer identifies Customer deposits as the largest liability in 2022, while the candidate incorrectly says it was not found.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12828,
+          "latency_ms": 1024.0307080093771,
+          "error": null,
+          "queries": [
+            "What was the largest liability in American Express's Balance Sheet in 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01981",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Was American Express able to retain card members during 2022?",
+          "gold_answer": "Yes",
+          "answer": "Yes. The filing says \u201cCard Member retention remained high\u201d in 2022, alongside record new card acquisitions, indicating American Express was able to retain card members during the year (page 44).",
+          "retrieved_pages": [
+            48,
+            88,
+            28,
+            45,
+            44
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer by stating that American Express was able to retain card members in 2022 and supports it with consistent filing language.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 22864,
+          "latency_ms": 913.5218340088613,
+          "error": null,
+          "queries": [
+            "Was American Express able to retain card members during 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_03620",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement.",
+          "gold_answer": "$9068.00",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            39,
+            70,
+            102,
+            55,
+            61
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 11705,
+          "latency_ms": 836.8062910012668,
+          "error": null,
+          "queries": [
+            "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement."
+          ]
+        },
+        {
+          "id": "financebench_id_04481",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the FY2022 unadjusted EBITDA % margin for PepsiCo? Calculate unadjusted EBITDA using unadjusted operating income and D&A (from cash flow statement). Give a response to the question by relying on the details shown in the statement of cash flows and the P&L statement.",
+          "gold_answer": "16.5%",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            39,
+            61,
+            55,
+            102,
+            48
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 12839,
+          "latency_ms": 810.2172910002992,
+          "error": null,
+          "queries": [
+            "What is the FY2022 unadjusted EBITDA % margin for PepsiCo? Calculate unadjusted EBITDA using unadjusted operating income and D&A (from cash flow statement). Give a response to the question by relying on the details shown in the statement of cash flows and the P&L statement."
+          ]
+        }
+      ]
+    },
+    {
+      "summary": {
+        "n": 30,
+        "accuracy": 0.5,
+        "page_hit_rate": 0.6,
+        "evidence_hit_rate": 0.6333333333333333,
+        "refusal_rate": 0.23333333333333334,
+        "avg_distinct_pages": 5,
+        "avg_context_chars": 15959,
+        "latency_p50_ms": 1123.2391250086948,
+        "latency_p95_ms": 1747.543660597876,
+        "error_count": 0
+      },
+      "records": [
+        {
+          "id": "financebench_id_00222",
+          "doc_name": "AMD_2022_10K",
+          "question": "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why.",
+          "gold_answer": "Yes. The quick ratio is 1.57, calculated as (cash and cash equivalents+Short term investments+Accounts receivable, net+receivables from related parties)/ (current liabilities).",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            3,
+            4,
+            105,
+            40,
+            42
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 19163,
+          "latency_ms": 1055.9868330019526,
+          "error": null,
+          "queries": [
+            "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00464",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Is Boeing's business subject to cyclicality?",
+          "gold_answer": "Yes, Boeing's business is subject to cyclicality due to its exposure to the airline industry which is a cyclical industry.",
+          "answer": "Yes. The filing says the airline industry is \u201ccyclical and very competitive,\u201d and that demand for Boeing\u2019s commercial aircraft is influenced by long-term traffic trends and macroeconomic conditions, which can affect orders, deliveries, revenues, and cash flows (page 6).",
+          "retrieved_pages": [
+            62,
+            21,
+            29,
+            7,
+            18
+          ],
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer by stating that Boeing is subject to cyclicality because of its exposure to the cyclical airline industry, with compatible supporting detail from the filing.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17946,
+          "latency_ms": 1125.5629170045722,
+          "error": null,
+          "queries": [
+            "Is Boeing's business subject to cyclicality?"
+          ]
+        },
+        {
+          "id": "financebench_id_00476",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Which debt securities are registered to trade on a national securities exchange under American Express' name as of 2022?",
+          "gold_answer": "There are none",
+          "answer": "Common Shares (par value $0.20 per Share) under the trading symbol **AXP** on the **New York Stock Exchange** were registered to trade under American Express\u2019 name as of 2022 (page 0).",
+          "retrieved_pages": [
+            68,
+            161,
+            125,
+            67,
+            0
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer says no debt securities were registered on a national securities exchange, while the candidate incorrectly names common shares, which are equity not debt.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14835,
+          "latency_ms": 958.0796250083949,
+          "error": null,
+          "queries": [
+            "Which debt securities are registered to trade on a national securities exchange under American Express' name as of 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_00494",
+          "doc_name": "BOEING_2022_10K",
+          "question": "What production rate changes is Boeing forecasting for FY2023?",
+          "gold_answer": "Boeing forecasts an increase in the production rates for the 737, 777X and 787 aircrafts in 2023.",
+          "answer": "Boeing says the 787 program is \u201ccurrently producing at low rates\u201d and expects to \u201cgradually increase to 5 per month in 2023,\u201d while the 737 program is expected to continue gradual production rate increases based on market demand and supply chain capacity. It also says production of the 777X is currently paused and expected to resume in 2023. (pages 8, 34)",
+          "retrieved_pages": [
+            32,
+            34,
+            115,
+            8,
+            50
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer by stating that Boeing expects higher production activity for the 737 and 787 in 2023 and a resumption/increase for the 777X in 2023.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17221,
+          "latency_ms": 1219.5792910060845,
+          "error": null,
+          "queries": [
+            "What production rate changes is Boeing forecasting for FY2023?"
+          ]
+        },
+        {
+          "id": "financebench_id_00517",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?",
+          "gold_answer": "Yes. Boeing has product and service categories that represent more than 20% of Boeing's revenue for FY2022. These categories are Commercial Airplanes which comprises 39% of total revenue, Defence which comprises 35% of total revenue and Services which comprises 26% of total revenue.",
+          "answer": "Yes. Based on the segment revenue breakdown, **Commercial Airplanes** represented about **38.8%** of FY2022 revenue ($25,867 million of $66,608 million), and **Defense, Space & Security** represented about **34.8%** ($23,162 million of $66,608 million). **Global Services** was also above 20% at about **26.4%** ($17,611 million of $66,608 million). **Boeing Capital** and unallocated items were below 20% (pages 58, 22).",
+          "retrieved_pages": [
+            61,
+            54,
+            23,
+            21,
+            62
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer that Commercial Airplanes, Defense, and Services each exceeded 20% of Boeing's FY2022 revenue, with percentages consistent within rounding.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12723,
+          "latency_ms": 1567.6032909977948,
+          "error": null,
+          "queries": [
+            "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_00563",
+          "doc_name": "AMD_2022_10K",
+          "question": "From FY21 to FY22, excluding Embedded, in which AMD reporting segment did sales proportionally increase the most?",
+          "gold_answer": "Data Center",
+          "answer": "Among the non-Embedded reporting segments, **Data Center** had the largest proportional sales increase from FY21 to FY22. Its net revenue rose from **$3.694 billion to $6.043 billion**, an increase of about **64%**; by comparison, Gaming increased about **21%** and Client decreased about **10%**. (pages 42, 47)",
+          "retrieved_pages": [
+            42,
+            5,
+            66,
+            8,
+            47
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies Data Center as the non-Embedded AMD segment with the largest proportional sales increase from FY21 to FY22, and its supporting figures are consistent with that conclusion.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 19361,
+          "latency_ms": 1150.377917001606,
+          "error": null,
+          "queries": [
+            "From FY21 to FY22, excluding Embedded, in which AMD reporting segment did sales proportionally increase the most?"
+          ]
+        },
+        {
+          "id": "financebench_id_00585",
+          "doc_name": "BOEING_2022_10K",
+          "question": "How does Boeing's effective tax rate in FY2022 compare to FY2021?",
+          "gold_answer": "Effective tax rate in FY2022 was 0.62%, compared to  -14.76% in FY2021.",
+          "answer": "Boeing\u2019s effective income tax rate was **(0.6)% in FY2022**, compared with **14.8% in FY2021**\u2014a decline of **15.4 percentage points**. (page 23)",
+          "retrieved_pages": [
+            26,
+            23,
+            54,
+            42,
+            61
+          ],
+          "correct": false,
+          "judge_reason": "The candidate answer has the signs wrong for both years; the gold answer says FY2022 was +0.62% and FY2021 was -14.76%, not -0.6% and +14.8%.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12512,
+          "latency_ms": 1023.1771660037339,
+          "error": null,
+          "queries": [
+            "How does Boeing's effective tax rate in FY2022 compare to FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_00678",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Does Boeing have an improving gross margin profile as of FY2022? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "Yes. Boeing has an improving gross margin profile as of FY2022. Gross profit improved from $3,017 million in FY2021 to $3,502 million in FY2022. Gross margin % improved from 4.8% in FY2021 to 5.3% in FY2022.",
+          "answer": "Gross margin is not a useful metric for Boeing here, because the filing emphasizes **cost of sales** and **operating margin** rather than gross margin, and Boeing\u2019s business mix includes long-term contracts and program accounting that make operating results more informative than a simple gross margin measure. The filing reports **operating margins** improved to **(5.3)% in 2022 from (4.7)% in 2021**, but they were still negative, so Boeing was **not yet showing a positive improving gross-margin-like profile** as of FY2022. (pages 23, 54)",
+          "retrieved_pages": [
+            23,
+            26,
+            54,
+            61,
+            24
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer says Boeing\u2019s gross margin did improve in FY2022 (gross profit and gross margin % both increased), while the candidate incorrectly rejects gross margin as the key metric and concludes Boeing was not showing an improving gross-margin profile.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 10899,
+          "latency_ms": 1424.1200840042438,
+          "error": null,
+          "queries": [
+            "Does Boeing have an improving gross margin profile as of FY2022? If gross margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00684",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "No. For AMCOR there has been a slight decline in gross margins by 0.8%.",
+          "answer": "Yes\u2014Amcor\u2019s gross margin profile improved slightly in FY2023. Gross profit was $2,725 million on net sales of $14,694 million in FY2023, versus $2,820 million on $14,544 million in FY2022, which implies gross margin of 18.5% in FY2023 compared with 19.4% in FY2022. So on a reported basis, gross margin actually declined modestly, not improved. However, operating income improved because restructuring/other related items moved favorably. (pages 28, 49)\n\nFor a packaging company like Amcor, gross margin is still a useful metric, but it can be less informative than operating margin/Adjusted EBIT because the business is heavily affected by pass-through raw material costs, currency, and restructuring items that can obscure underlying performance. The filing specifically notes large pass-through raw material costs and currency impacts affecting results. (pages 28, 31, 34)",
+          "retrieved_pages": [
+            29,
+            31,
+            49,
+            34,
+            28
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer says simply no, with a slight gross margin decline of 0.8%, but the candidate\u2019s top-line conclusion says 'Yes' improved, which contradicts the required answer even though later calculations show a decline.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14786,
+          "latency_ms": 1844.648166996194,
+          "error": null,
+          "queries": [
+            "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00720",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What drove gross margin change as of the FY2022 for American Express? If gross margin is not a useful metric for a company like this, then please state that and explain why.",
+          "gold_answer": "Performance is not measured through gross margin",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            48,
+            84,
+            45,
+            63,
+            4
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 17062,
+          "latency_ms": 849.7720000013942,
+          "error": null,
+          "queries": [
+            "What drove gross margin change as of the FY2022 for American Express? If gross margin is not a useful metric for a company like this, then please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00723",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Does AMEX have an improving operating margin profile as of 2022? If operating margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "Performance is not measured through operating margin",
+          "answer": "Yes. Based on the filing, AMEX\u2019s 2022 results show improved operating leverage rather than a deteriorating margin profile: total revenues net of interest expense increased 25% year-over-year, while total expenses increased 24% year-over-year, indicating revenue growth slightly outpaced expense growth. The filing also notes strong growth in revenue lines and that operating expenses increased due to investment and one-time items, but does not provide an operating margin metric directly. For a payments and lending business like AMEX, operating margin is still a useful metric because expenses and revenues are reported clearly enough to assess profitability trends, though it should be viewed alongside credit losses and net interest income. (pages 44, 48, 45)",
+          "retrieved_pages": [
+            48,
+            44,
+            45,
+            63,
+            88
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer says operating margin is not the performance metric used here, whereas the candidate incorrectly asserts that operating margin is still useful and gives a margin-based conclusion.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 19728,
+          "latency_ms": 1446.9829169975128,
+          "error": null,
+          "queries": [
+            "Does AMEX have an improving operating margin profile as of 2022? If operating margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00735",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?",
+          "gold_answer": "No, Pepsico is not involved in material legal battles.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            31,
+            39,
+            52,
+            127,
+            108
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 17546,
+          "latency_ms": 861.9106660044054,
+          "error": null,
+          "queries": [
+            "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_00757",
+          "doc_name": "AMD_2022_10K",
+          "question": "Did AMD report customer concentration in FY22?",
+          "gold_answer": "Yes, one customer accounted for 16% of consolidated net revenue",
+          "answer": "Yes. AMD stated that \u201ca small number of customers will continue to account for a substantial part of AMD\u2019s revenue in the future,\u201d indicating customer concentration in FY22 (page 3).",
+          "retrieved_pages": [
+            4,
+            47,
+            3,
+            42,
+            43
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly concludes that AMD reported customer concentration in FY22, which matches the gold answer, and does not contradict the specific 16% detail.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 21000,
+          "latency_ms": 1086.7195419996278,
+          "error": null,
+          "queries": [
+            "Did AMD report customer concentration in FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_00799",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why.",
+          "gold_answer": "The quick ratio has slightly improved from 0.67 times to 0.69 times between FY 2023 and FY 2022.(3.4% jump)",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            29,
+            31,
+            28,
+            34,
+            49
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 14786,
+          "latency_ms": 893.7411669903668,
+          "error": null,
+          "queries": [
+            "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00917",
+          "doc_name": "AMD_2022_10K",
+          "question": "What drove operating margin change as of the FY22 for AMD? If operating margin is not a useful metric for a company like this, then please state that and explain why.",
+          "gold_answer": "The decrease in AMD's operating income was primarily driven by amortization of intangible assets associated with the Xilinx acquisition",
+          "answer": "AMD\u2019s operating margin declined in FY22, primarily because operating income fell from $3.648 billion in 2021 to $1.264 billion in 2022 while net revenue rose from $16.434 billion to $23.601 billion. The filing says the decrease in operating income was mainly driven by amortization of acquisition-related intangible assets associated with the Xilinx acquisition, which affected both gross margin and operating income. Gross margin also fell from 48% in 2021 to 45% in 2022 for the same reason. Specifically, operating income was reduced by $1.448 billion of cost-of-sales amortization and $2.100 billion of operating expense amortization related to acquisition intangibles. (pages 42, 53)\n\nOperating margin is still a useful metric for AMD, because the company reports operating income and net revenue by segment and for the consolidated business, so margin helps show how efficiently revenue is converted into operating profit. However, for FY22 it was heavily distorted by acquisition-related amortization, so year-over-year comparisons should be interpreted with caution. (pages 42, 47, 53)",
+          "retrieved_pages": [
+            47,
+            4,
+            42,
+            3,
+            53
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies Xilinx acquisition-related amortization of intangible assets as the primary driver of AMD\u2019s FY22 operating margin decline and adds compatible detail without contradiction.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 16836,
+          "latency_ms": 1628.7917500012554,
+          "error": null,
+          "queries": [
+            "What drove operating margin change as of the FY22 for AMD? If operating margin is not a useful metric for a company like this, then please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00995",
+          "doc_name": "AMD_2022_10K",
+          "question": "What are the major products and services that AMD sells as of FY22?",
+          "gold_answer": "AMD sells server microprocessors (CPUs) and graphics processing units (GPUs), data processing units (DPUs), Field Programmable Gate Arrays (FPGAs), and Adaptive System-on-Chip (SoC) products for data centers; CPUs, accelerated processing units (APUs) that integrate CPUs and GPUs, and chipsets for desktop and notebook personal computers; discrete GPUs, and semi-custom SoC products and development services; and embedded CPUs, GPUs, APUs, FPGAs, and Adaptive SoC products.",
+          "answer": "As of FY22, AMD primarily offered: server microprocessors (CPUs) and graphics processing units (GPUs), data processing units (DPUs), Field Programmable Gate Arrays (FPGAs), and Adaptive System-on-Chip (SoC) products for data centers; CPUs, accelerated processing units (APUs) that integrate CPUs and GPUs, and chipsets for desktop and notebook personal computers; discrete GPUs, and semi-custom SoC products and development services; and embedded CPUs, GPUs, APUs, FPGAs, and Adaptive SoC products. AMD also may sell or license portions of its intellectual property portfolio. (page 3)",
+          "retrieved_pages": [
+            4,
+            3,
+            10,
+            43,
+            42
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer's list of AMD's major FY22 products and services, with only an additional non-contradictory note about IP licensing.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 22494,
+          "latency_ms": 1179.2481669981498,
+          "error": null,
+          "queries": [
+            "What are the major products and services that AMD sells as of FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_01009",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What are the geographies that Pepsico primarily operates in as of FY2022?",
+          "gold_answer": "As of FY2022, Pepsico primarily operates in the following geographies: North America, Latin America, Europe, Africa, Middle East, South Asia, Asia Pacific, Australia, New Zealand and China.",
+          "answer": "PepsiCo\u2019s largest operations are in the United States, Mexico, Russia, Canada, China, the United Kingdom, and South Africa, and it serves customers and consumers in more than 200 countries and territories. Its reportable geographies/divisions are North America, Latin America, Europe, Africa, Middle East and South Asia, and Asia Pacific, Australia and New Zealand, and China region. (pages 68, 3, 4)",
+          "retrieved_pages": [
+            31,
+            3,
+            70,
+            68,
+            4
+          ],
+          "correct": true,
+          "judge_reason": "The candidate includes the same primary operating geographies as the gold answer\u2014North America, Latin America, Europe, Africa/Middle East/South Asia, and Asia Pacific/Australia/New Zealand/China\u2014and the extra country examples do not contradict it.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 16331,
+          "latency_ms": 1628.860374999931,
+          "error": null,
+          "queries": [
+            "What are the geographies that Pepsico primarily operates in as of FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01028",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What are the geographies that American Express primarily operates in as of 2022?",
+          "gold_answer": "United States, EMEA, APAC, and LACC",
+          "answer": "American Express primarily operates in the United States and outside the United States, with significant international jurisdictions including the United Kingdom, the European Union, Australia, Japan, Canada, and Mexico. Its principal locations also include the U.S., India, England, the Philippines, Japan, Malaysia, Australia, Spain, Canada, and Mexico (pages 4, 152).",
+          "retrieved_pages": [
+            3,
+            5,
+            39,
+            4,
+            152
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer specifies the company\u2019s primary operating geographies as the four regions United States, EMEA, APAC, and LACC, while the candidate gives a different split and lists countries instead of those required regional categories.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12588,
+          "latency_ms": 1120.9153330128174,
+          "error": null,
+          "queries": [
+            "What are the geographies that American Express primarily operates in as of 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01079",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?",
+          "gold_answer": "Amcor completed these acquisitions during FY2023:\n-100% equity interest of a flexibles manufacturing company in the Czech Republic\n- 100% equity interest in a medical device packaging manufacturing site in\nShanghai, China.\n-acquisition of a New Zealand-based leading manufacturer of state-of-the-art, automated protein\npackaging machines.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            29,
+            108,
+            31,
+            34,
+            49
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 14372,
+          "latency_ms": 965.9272499993676,
+          "error": null,
+          "queries": [
+            "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_01091",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Has Boeing reported any materially important ongoing legal battles from FY2022?",
+          "gold_answer": "Yes. Multiple lawsuits have been filed against Boeing resulting from a 2018 Lion Air crash and a 2019 Ethiopian Airlines crash.",
+          "answer": "Yes. Boeing disclosed multiple ongoing legal matters related to the 737 MAX accidents, stating that it cannot reasonably estimate a range of loss for remaining pending lawsuits or other matters related to those accidents and the 737 MAX. It also noted an ongoing arbitration dispute with Embraer after Boeing terminated the 2019 joint venture agreements, and it cannot reasonably estimate any resulting loss. (page 112)",
+          "retrieved_pages": [
+            42,
+            112,
+            15,
+            3,
+            23
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly says Boeing reported materially important ongoing legal matters from FY2022, including the lawsuits arising from the 737 MAX crashes cited in the gold answer, and the extra Embraer dispute does not contradict it.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 18393,
+          "latency_ms": 1380.8697500062408,
+          "error": null,
+          "queries": [
+            "Has Boeing reported any materially important ongoing legal battles from FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01148",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "What industry does AMCOR primarily operate in?",
+          "gold_answer": "Amcor is a global leader in packaging production for various use cases.",
+          "answer": "AMCOR primarily operates in the packaging industry, developing and producing responsible packaging for food, beverage, pharmaceutical, medical, home and personal-care, and other products. (pages 29, 54)",
+          "retrieved_pages": [
+            29,
+            54,
+            8,
+            10,
+            5
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies Amcor as operating in the packaging industry and adds consistent detail about the types of packaging it produces.",
+          "page_hit": false,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17223,
+          "latency_ms": 982.21079200448,
+          "error": null,
+          "queries": [
+            "What industry does AMCOR primarily operate in?"
+          ]
+        },
+        {
+          "id": "financebench_id_01198",
+          "doc_name": "AMD_2022_10K",
+          "question": "What drove revenue change as of the FY22 for AMD?",
+          "gold_answer": "In 2022, AMD reported Higher sales of their EPYC server processors, higher semi-custom product sales, and the inclusion of Xilinx embedded product sales",
+          "answer": "AMD\u2019s 2022 net revenue increased 44% to $23.6 billion, driven primarily by a 64% increase in the Data Center segment from higher sales of EPYC server processors, a 21% increase in Gaming segment revenue from higher semi-custom product sales, and a significant increase in Embedded segment revenue due to the inclusion of Xilinx embedded product sales. This was partially offset by a 10% decrease in Client segment revenue due to lower processor shipments in a weak PC market and inventory correction across the PC supply chain (page 40).",
+          "retrieved_pages": [
+            47,
+            42,
+            4,
+            43,
+            53
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer\u2019s drivers of AMD\u2019s FY22 revenue change\u2014higher EPYC server processor sales, higher semi-custom product sales, and inclusion of Xilinx embedded product sales\u2014while adding consistent detail.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 18189,
+          "latency_ms": 1288.7801670003682,
+          "error": null,
+          "queries": [
+            "What drove revenue change as of the FY22 for AMD?"
+          ]
+        },
+        {
+          "id": "financebench_id_01279",
+          "doc_name": "AMD_2022_10K",
+          "question": "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?",
+          "gold_answer": "In 2022, AMD brought in the most cashflow from Operations",
+          "answer": "Operating activities brought in the most cash flow for AMD in FY22, providing $3.565 billion of net cash, compared with investing activities providing $1.999 billion and financing activities using $3.264 billion. (page 55)",
+          "retrieved_pages": [
+            51,
+            57,
+            53,
+            47,
+            58
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies operating activities as providing the most cash flow in FY22, consistent with the gold answer.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 10963,
+          "latency_ms": 1059.0123329893686,
+          "error": null,
+          "queries": [
+            "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_01290",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Who are the primary customers of Boeing as of FY2022?",
+          "gold_answer": "Boeing's primary customers as of FY2022 are a limited number of commercial airlines and the US government. The US government accounted for 40% of Boeing's total revenues in FY2022.",
+          "answer": "Boeing\u2019s primary customers as of FY2022 are commercial airline customers and defense/government customers, including customers for satellites, missile defense, human space flight, and launch systems and services. The company also serves Boeing customers through financing solutions via Boeing Capital. (page 21)",
+          "retrieved_pages": [
+            61,
+            54,
+            21,
+            23,
+            4
+          ],
+          "correct": false,
+          "judge_reason": "The candidate identifies broad customer categories but omits the key point from the gold answer that Boeing's primary customers are a limited number of commercial airlines and that the U.S. government accounted for 40% of FY2022 revenue.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 13376,
+          "latency_ms": 1113.7880830065114,
+          "error": null,
+          "queries": [
+            "Who are the primary customers of Boeing as of FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01328",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the quantity of restructuring costs directly outlined in Pepsico's income statements for FY2022? If restructuring costs are not explicitly outlined then state 0.",
+          "gold_answer": "Pepsico's restructuring costs in FY2022 amounted to $411 million .",
+          "answer": "0 (page 48)",
+          "retrieved_pages": [
+            77,
+            48,
+            108,
+            71,
+            78
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer states PepsiCo reported $411 million of restructuring costs in FY2022, so answering 0 is incorrect.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 13383,
+          "latency_ms": 969.6049999911338,
+          "error": null,
+          "queries": [
+            "What is the quantity of restructuring costs directly outlined in Pepsico's income statements for FY2022? If restructuring costs are not explicitly outlined then state 0."
+          ]
+        },
+        {
+          "id": "financebench_id_01351",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "How much has the effective tax rate of American Express changed between FY2021 and FY2022?",
+          "gold_answer": "The effective tax rate for American Express has changed/dropped from 24.6% in FY 2021 to 21.6% in FY 2022.",
+          "answer": "American Express\u2019s effective tax rate decreased by 3.0 percentage points, from 24.6% in 2021 to 21.6% in 2022. (page 48)",
+          "retrieved_pages": [
+            48,
+            162,
+            98,
+            149,
+            40
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer exactly, stating that the effective tax rate fell from 24.6% in FY2021 to 21.6% in FY2022, a decrease of 3.0 percentage points.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14818,
+          "latency_ms": 993.367125003715,
+          "error": null,
+          "queries": [
+            "How much has the effective tax rate of American Express changed between FY2021 and FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01964",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What was the largest liability in American Express's Balance Sheet in 2022?",
+          "gold_answer": "Customer deposits",
+          "answer": "The largest liability on American Express\u2019s balance sheet in 2022 was **customer deposits** at **$123 billion** (page 138).",
+          "retrieved_pages": [
+            125,
+            151,
+            138,
+            124,
+            98
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies customer deposits as the largest liability, and the cited amount is consistent with the filing within normal rounding.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12828,
+          "latency_ms": 1922.0376250013942,
+          "error": null,
+          "queries": [
+            "What was the largest liability in American Express's Balance Sheet in 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01981",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Was American Express able to retain card members during 2022?",
+          "gold_answer": "Yes",
+          "answer": "Yes. The filing says that \u201cCard Member retention remained high\u201d in 2022, alongside record new card acquisitions and stronger premium value propositions (page 44).",
+          "retrieved_pages": [
+            48,
+            88,
+            28,
+            45,
+            44
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer that American Express was able to retain card members in 2022, and it cites consistent support from the filing.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 22864,
+          "latency_ms": 1230.778208002448,
+          "error": null,
+          "queries": [
+            "Was American Express able to retain card members during 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_03620",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement.",
+          "gold_answer": "$9068.00",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            39,
+            70,
+            102,
+            55,
+            61
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 11705,
+          "latency_ms": 916.9365830020979,
+          "error": null,
+          "queries": [
+            "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement."
+          ]
+        },
+        {
+          "id": "financebench_id_04481",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the FY2022 unadjusted EBITDA % margin for PepsiCo? Calculate unadjusted EBITDA using unadjusted operating income and D&A (from cash flow statement). Give a response to the question by relying on the details shown in the statement of cash flows and the P&L statement.",
+          "gold_answer": "16.5%",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            39,
+            61,
+            55,
+            102,
+            48
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 12839,
+          "latency_ms": 1153.4279579936992,
+          "error": null,
+          "queries": [
+            "What is the FY2022 unadjusted EBITDA % margin for PepsiCo? Calculate unadjusted EBITDA using unadjusted operating income and D&A (from cash flow statement). Give a response to the question by relying on the details shown in the statement of cash flows and the P&L statement."
+          ]
+        }
+      ]
+    },
+    {
+      "summary": {
+        "n": 30,
+        "accuracy": 0.4666666666666667,
+        "page_hit_rate": 0.6,
+        "evidence_hit_rate": 0.6333333333333333,
+        "refusal_rate": 0.3,
+        "avg_distinct_pages": 5,
+        "avg_context_chars": 15959,
+        "latency_p50_ms": 1059.7053540041088,
+        "latency_p95_ms": 1503.6332663003122,
+        "error_count": 0
+      },
+      "records": [
+        {
+          "id": "financebench_id_00222",
+          "doc_name": "AMD_2022_10K",
+          "question": "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why.",
+          "gold_answer": "Yes. The quick ratio is 1.57, calculated as (cash and cash equivalents+Short term investments+Accounts receivable, net+receivables from related parties)/ (current liabilities).",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            3,
+            4,
+            105,
+            40,
+            42
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 19163,
+          "latency_ms": 854.9096659990028,
+          "error": null,
+          "queries": [
+            "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00464",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Is Boeing's business subject to cyclicality?",
+          "gold_answer": "Yes, Boeing's business is subject to cyclicality due to its exposure to the airline industry which is a cyclical industry.",
+          "answer": "Yes. The filing says the airline industry \u201chas been cyclical and very competitive,\u201d and Boeing\u2019s demand for commercial aircraft is driven by long-term airline traffic trends and broader economic conditions, which can lead to significant swings in orders, revenues, and profitability (pages 6, 20, 28).",
+          "retrieved_pages": [
+            62,
+            21,
+            29,
+            7,
+            18
+          ],
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer that Boeing is subject to cyclicality due to its exposure to the cyclical airline industry, with consistent supporting details.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17946,
+          "latency_ms": 1076.316125006997,
+          "error": null,
+          "queries": [
+            "Is Boeing's business subject to cyclicality?"
+          ]
+        },
+        {
+          "id": "financebench_id_00476",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Which debt securities are registered to trade on a national securities exchange under American Express' name as of 2022?",
+          "gold_answer": "There are none",
+          "answer": "Common Shares (par value $0.20 per Share) are registered to trade on the New York Stock Exchange under American Express\u2019 name as of 2022 (page 0).",
+          "retrieved_pages": [
+            68,
+            161,
+            125,
+            67,
+            0
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer states that no debt securities are registered to trade on a national securities exchange, while the candidate incorrectly names common shares, which are equity not debt.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14835,
+          "latency_ms": 851.30445798859,
+          "error": null,
+          "queries": [
+            "Which debt securities are registered to trade on a national securities exchange under American Express' name as of 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_00494",
+          "doc_name": "BOEING_2022_10K",
+          "question": "What production rate changes is Boeing forecasting for FY2023?",
+          "gold_answer": "Boeing forecasts an increase in the production rates for the 737, 777X and 787 aircrafts in 2023.",
+          "answer": "Boeing says the 787 program is currently producing at low rates and expects to gradually increase to 5 per month in 2023, while the 737 program will gradually increase production rates based on market demand and supply chain capacity. It also says production of the 777X is currently paused and is expected to resume in 2023. (pages 8, 34)",
+          "retrieved_pages": [
+            32,
+            34,
+            115,
+            8,
+            50
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly states that Boeing expects higher 787 and 737 production in 2023 and that 777X production will resume in 2023, which matches the gold answer's forecast of increased rates for 737, 777X, and 787.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17221,
+          "latency_ms": 1272.6452079950832,
+          "error": null,
+          "queries": [
+            "What production rate changes is Boeing forecasting for FY2023?"
+          ]
+        },
+        {
+          "id": "financebench_id_00517",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?",
+          "gold_answer": "Yes. Boeing has product and service categories that represent more than 20% of Boeing's revenue for FY2022. These categories are Commercial Airplanes which comprises 39% of total revenue, Defence which comprises 35% of total revenue and Services which comprises 26% of total revenue.",
+          "answer": "Yes. In FY2022, the only category shown as exceeding 20% of Boeing\u2019s total revenue is Commercial Airplanes, with $25,867 million of $66,608 million total revenues, or about 38.8% (pages 61, 23).",
+          "retrieved_pages": [
+            61,
+            54,
+            23,
+            21,
+            62
+          ],
+          "correct": false,
+          "judge_reason": "The candidate answer is incomplete because Boeing also had Defense at 35% and Services at 26% of FY2022 revenue, both above 20%, not just Commercial Airplanes.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12723,
+          "latency_ms": 1020.2082079922548,
+          "error": null,
+          "queries": [
+            "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_00563",
+          "doc_name": "AMD_2022_10K",
+          "question": "From FY21 to FY22, excluding Embedded, in which AMD reporting segment did sales proportionally increase the most?",
+          "gold_answer": "Data Center",
+          "answer": "Data Center proportionally increased the most among the non-Embedded reporting segments, with net revenue rising from $3.694 billion in FY21 to $6.043 billion in FY22, about a 64% increase (page 47).",
+          "retrieved_pages": [
+            42,
+            5,
+            66,
+            8,
+            47
+          ],
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer by identifying Data Center as the non-Embedded segment with the largest proportional sales increase from FY21 to FY22.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 19361,
+          "latency_ms": 1043.0945830012206,
+          "error": null,
+          "queries": [
+            "From FY21 to FY22, excluding Embedded, in which AMD reporting segment did sales proportionally increase the most?"
+          ]
+        },
+        {
+          "id": "financebench_id_00585",
+          "doc_name": "BOEING_2022_10K",
+          "question": "How does Boeing's effective tax rate in FY2022 compare to FY2021?",
+          "gold_answer": "Effective tax rate in FY2022 was 0.62%, compared to  -14.76% in FY2021.",
+          "answer": "Boeing\u2019s effective income tax rate was **(0.6)% in FY2022** compared with **14.8% in FY2021**, so it **declined sharply year over year** (page 23).",
+          "retrieved_pages": [
+            26,
+            23,
+            54,
+            42,
+            61
+          ],
+          "correct": false,
+          "judge_reason": "The candidate answer reverses the signs of both rates: the gold answer is +0.62% in FY2022 versus -14.76% in FY2021, not -0.6% and +14.8%.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12512,
+          "latency_ms": 1003.1376250117319,
+          "error": null,
+          "queries": [
+            "How does Boeing's effective tax rate in FY2022 compare to FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_00678",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Does Boeing have an improving gross margin profile as of FY2022? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "Yes. Boeing has an improving gross margin profile as of FY2022. Gross profit improved from $3,017 million in FY2021 to $3,502 million in FY2022. Gross margin % improved from 4.8% in FY2021 to 5.3% in FY2022.",
+          "answer": "Boeing does not report gross margin as a primary operating metric in the filing, so gross margin is not especially useful here. The filing emphasizes revenues, loss from operations, and operating margins, along with segment results and cost of sales. It also notes that BCA uses program accounting for cost of sales, while BDS and parts of BGS use long-term contract accounting, which makes a traditional gross margin comparison less informative. The closest operating margin measure shown improved in 2022 versus 2021: GAAP operating margin was (5.3)% in 2022 versus (4.7)% in 2021, which is actually slightly worse, while revenues increased materially. So there is not a clear improving gross margin profile in FY2022. (pages 23, 24, 54, 61)",
+          "retrieved_pages": [
+            23,
+            26,
+            54,
+            61,
+            24
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer says Boeing\u2019s gross margin did improve in FY2022 (gross profit $3,502M vs. $3,017M; gross margin 5.3% vs. 4.8%), while the candidate incorrectly says gross margin is not useful and denies a clear improvement.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 10899,
+          "latency_ms": 1522.4741660058498,
+          "error": null,
+          "queries": [
+            "Does Boeing have an improving gross margin profile as of FY2022? If gross margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00684",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "No. For AMCOR there has been a slight decline in gross margins by 0.8%.",
+          "answer": "AMCOR\u2019s gross margin did **not** improve in FY2023; it **declined slightly**. Gross profit as a percentage of net sales fell from **19.4% in FY2022** to **18.5% in FY2023**. That indicates a modestly weaker gross margin profile year over year. AMCOR\u2019s business is packaging, where gross margin is still a relevant metric, so it is useful here. (pages 28, 49)",
+          "retrieved_pages": [
+            29,
+            31,
+            49,
+            34,
+            28
+          ],
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer by concluding gross margin did not improve and instead declined slightly, with a consistent quantified decline and no contradictory claim that the metric is unusable.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14786,
+          "latency_ms": 1274.662541996804,
+          "error": null,
+          "queries": [
+            "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00720",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What drove gross margin change as of the FY2022 for American Express? If gross margin is not a useful metric for a company like this, then please state that and explain why.",
+          "gold_answer": "Performance is not measured through gross margin",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            48,
+            84,
+            45,
+            63,
+            4
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 17062,
+          "latency_ms": 760.4263329994865,
+          "error": null,
+          "queries": [
+            "What drove gross margin change as of the FY2022 for American Express? If gross margin is not a useful metric for a company like this, then please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00723",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Does AMEX have an improving operating margin profile as of 2022? If operating margin is not a useful metric for a company like this, then state that and explain why.",
+          "gold_answer": "Performance is not measured through operating margin",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            48,
+            44,
+            45,
+            63,
+            88
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 19728,
+          "latency_ms": 806.9593750115018,
+          "error": null,
+          "queries": [
+            "Does AMEX have an improving operating margin profile as of 2022? If operating margin is not a useful metric for a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00735",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?",
+          "gold_answer": "No, Pepsico is not involved in material legal battles.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            31,
+            39,
+            52,
+            127,
+            108
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 17546,
+          "latency_ms": 793.0684169987217,
+          "error": null,
+          "queries": [
+            "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_00757",
+          "doc_name": "AMD_2022_10K",
+          "question": "Did AMD report customer concentration in FY22?",
+          "gold_answer": "Yes, one customer accounted for 16% of consolidated net revenue",
+          "answer": "Yes. AMD stated in its forward-looking statements that \u201ca small number of customers will continue to account for a substantial part of AMD\u2019s revenue in the future,\u201d indicating customer concentration in FY22 (page 3).",
+          "retrieved_pages": [
+            4,
+            47,
+            3,
+            42,
+            43
+          ],
+          "correct": false,
+          "judge_reason": "The candidate does not provide the specific FY22 reported concentration that one customer accounted for 16% of consolidated net revenue, and instead cites a generic forward-looking statement.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 21000,
+          "latency_ms": 1264.714457996888,
+          "error": null,
+          "queries": [
+            "Did AMD report customer concentration in FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_00799",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why.",
+          "gold_answer": "The quick ratio has slightly improved from 0.67 times to 0.69 times between FY 2023 and FY 2022.(3.4% jump)",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            29,
+            31,
+            28,
+            34,
+            49
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 14786,
+          "latency_ms": 955.0113339937525,
+          "error": null,
+          "queries": [
+            "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00917",
+          "doc_name": "AMD_2022_10K",
+          "question": "What drove operating margin change as of the FY22 for AMD? If operating margin is not a useful metric for a company like this, then please state that and explain why.",
+          "gold_answer": "The decrease in AMD's operating income was primarily driven by amortization of intangible assets associated with the Xilinx acquisition",
+          "answer": "AMD\u2019s operating margin declined in FY22 mainly because operating income fell from $3.648 billion in 2021 to $1.264 billion in 2022, while net revenue rose from $16.434 billion to $23.601 billion, which reduced the margin from about 22.2% to 5.4%. The filing says the decrease in operating income was primarily driven by amortization of acquisition-related intangible assets associated with the Xilinx acquisition, partially offset by higher revenue growth in Data Center, Gaming, and Embedded, and by higher operating expenses (pages 42, 47, 53).",
+          "retrieved_pages": [
+            47,
+            4,
+            42,
+            3,
+            53
+          ],
+          "correct": true,
+          "judge_reason": "The candidate matches the gold answer that FY22 operating margin declined primarily \u0628\u0633\u0628\u0628 amortization of acquisition-related intangible assets from the Xilinx acquisition, and its additional details do not contradict that.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 16836,
+          "latency_ms": 1480.605499993544,
+          "error": null,
+          "queries": [
+            "What drove operating margin change as of the FY22 for AMD? If operating margin is not a useful metric for a company like this, then please state that and explain why."
+          ]
+        },
+        {
+          "id": "financebench_id_00995",
+          "doc_name": "AMD_2022_10K",
+          "question": "What are the major products and services that AMD sells as of FY22?",
+          "gold_answer": "AMD sells server microprocessors (CPUs) and graphics processing units (GPUs), data processing units (DPUs), Field Programmable Gate Arrays (FPGAs), and Adaptive System-on-Chip (SoC) products for data centers; CPUs, accelerated processing units (APUs) that integrate CPUs and GPUs, and chipsets for desktop and notebook personal computers; discrete GPUs, and semi-custom SoC products and development services; and embedded CPUs, GPUs, APUs, FPGAs, and Adaptive SoC products.",
+          "answer": "As of FY22, AMD primarily offered: server microprocessors (CPUs) and graphics processing units (GPUs), data processing units (DPUs), field programmable gate arrays (FPGAs), and adaptive system-on-chip (SoC) products for data centers; CPUs, accelerated processing units (APUs), and chipsets for desktop and notebook personal computers; discrete GPUs, semi-custom SoC products, and development services; and embedded CPUs, GPUs, APUs, FPGAs, and adaptive SoC products. AMD also from time to time sells or licenses portions of its intellectual property portfolio. (page 3)\n\nAMD\u2019s branded product lines also include Ryzen, Athlon, Radeon, Radeon PRO, EPYC, Instinct, Radeon Instinct, Alveo, Virtex, Kintex, Artix, Spartan, Zynq, Versal, Vitis, and Vivado, among others. (page 10)",
+          "retrieved_pages": [
+            4,
+            3,
+            10,
+            43,
+            42
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer's listed product and service categories for FY22, with only additional non-contradictory detail about IP licensing and branded product lines.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 22494,
+          "latency_ms": 1636.5121249982622,
+          "error": null,
+          "queries": [
+            "What are the major products and services that AMD sells as of FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_01009",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What are the geographies that Pepsico primarily operates in as of FY2022?",
+          "gold_answer": "As of FY2022, Pepsico primarily operates in the following geographies: North America, Latin America, Europe, Africa, Middle East, South Asia, Asia Pacific, Australia, New Zealand and China.",
+          "answer": "PepsiCo primarily operates in the United States, Mexico, Russia, Canada, China, the United Kingdom and South Africa, and serves customers and consumers in more than 200 countries and territories overall. Its reportable geographies/divisions are North America, Latin America, Europe, Africa, Middle East and South Asia, and Asia Pacific, Australia and New Zealand and China region. (pages 4, 68)",
+          "retrieved_pages": [
+            31,
+            3,
+            70,
+            68,
+            4
+          ],
+          "correct": true,
+          "judge_reason": "The candidate includes the same primary operating geographies as the gold answer\u2014North America, Latin America, Europe, Africa/Middle East/South Asia, and Asia Pacific/Australia/New Zealand/China\u2014with only additional non-contradictory detail.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 16331,
+          "latency_ms": 1171.1004999961006,
+          "error": null,
+          "queries": [
+            "What are the geographies that Pepsico primarily operates in as of FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01028",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What are the geographies that American Express primarily operates in as of 2022?",
+          "gold_answer": "United States, EMEA, APAC, and LACC",
+          "answer": "American Express primarily operates in the United States and outside the United States, with significant international jurisdictions including the United Kingdom, the European Union, Australia, Japan, Canada, and Mexico. It also maintains major operations in Phoenix, Florida, Gurgaon, Brighton, Manila, Tokyo, Kuala Lumpur, Sydney, London, Madrid, Toronto, and Mexico City. (pages 4, 152, 39)",
+          "retrieved_pages": [
+            3,
+            5,
+            39,
+            4,
+            152
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer lists the primary operating geographies as United States, EMEA, APAC, and LACC, but the candidate instead gives 'United States and outside the United States' plus examples of countries and cities, omitting those required regional categories.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12588,
+          "latency_ms": 1110.077707999153,
+          "error": null,
+          "queries": [
+            "What are the geographies that American Express primarily operates in as of 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01079",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?",
+          "gold_answer": "Amcor completed these acquisitions during FY2023:\n-100% equity interest of a flexibles manufacturing company in the Czech Republic\n- 100% equity interest in a medical device packaging manufacturing site in\nShanghai, China.\n-acquisition of a New Zealand-based leading manufacturer of state-of-the-art, automated protein\npackaging machines.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            29,
+            108,
+            31,
+            34,
+            49
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 14372,
+          "latency_ms": 847.9018749931129,
+          "error": null,
+          "queries": [
+            "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?"
+          ]
+        },
+        {
+          "id": "financebench_id_01091",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Has Boeing reported any materially important ongoing legal battles from FY2022?",
+          "gold_answer": "Yes. Multiple lawsuits have been filed against Boeing resulting from a 2018 Lion Air crash and a 2019 Ethiopian Airlines crash.",
+          "answer": "Yes. Boeing disclosed that multiple legal actions remain ongoing related to the 737 MAX accidents, and it stated that it cannot reasonably estimate a range of loss, if any, for remaining pending lawsuits or other matters related to those accidents. It also disclosed an ongoing arbitration with Embraer after Boeing terminated the joint venture agreements, which it likewise cannot reasonably estimate the outcome of. These were described as potentially material legal matters. (pages 112, 15)",
+          "retrieved_pages": [
+            42,
+            112,
+            15,
+            3,
+            23
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly says Boeing reported ongoing material legal matters from FY2022, including the lawsuits arising from the 737 MAX/Lion Air and Ethiopian Airlines crashes, and extra mention of Embraer arbitration does not contradict the gold answer.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 18393,
+          "latency_ms": 1219.2736249999143,
+          "error": null,
+          "queries": [
+            "Has Boeing reported any materially important ongoing legal battles from FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01148",
+          "doc_name": "AMCOR_2023_10K",
+          "question": "What industry does AMCOR primarily operate in?",
+          "gold_answer": "Amcor is a global leader in packaging production for various use cases.",
+          "answer": "AMCOR primarily operates in the packaging industry, developing and producing responsible packaging for food, beverage, pharmaceutical, medical, home and personal-care, and other products. (pages 29, 54)",
+          "retrieved_pages": [
+            29,
+            54,
+            8,
+            10,
+            5
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies Amcor as operating in the packaging industry, consistent with the gold answer that it is a global leader in packaging production.",
+          "page_hit": false,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 17223,
+          "latency_ms": 1334.0543749945937,
+          "error": null,
+          "queries": [
+            "What industry does AMCOR primarily operate in?"
+          ]
+        },
+        {
+          "id": "financebench_id_01198",
+          "doc_name": "AMD_2022_10K",
+          "question": "What drove revenue change as of the FY22 for AMD?",
+          "gold_answer": "In 2022, AMD reported Higher sales of their EPYC server processors, higher semi-custom product sales, and the inclusion of Xilinx embedded product sales",
+          "answer": "AMD\u2019s 2022 net revenue increase was driven primarily by a 64% increase in the Data Center segment due to higher sales of EPYC server processors, a 21% increase in Gaming segment revenue due to higher semi-custom product sales, and a significant increase in Embedded segment revenue from the inclusion of Xilinx embedded product sales. This was partially offset by a 10% decrease in Client segment revenue due to lower processor shipments driven by a weak PC market and inventory correction across the PC supply chain. (page 42)",
+          "retrieved_pages": [
+            47,
+            42,
+            4,
+            43,
+            53
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer\u2019s drivers of FY22 revenue change\u2014higher EPYC server processor sales, higher semi-custom product sales, and inclusion of Xilinx embedded product sales\u2014and the added offset from weaker Client revenue does not contradict it.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 18189,
+          "latency_ms": 1175.4348329995992,
+          "error": null,
+          "queries": [
+            "What drove revenue change as of the FY22 for AMD?"
+          ]
+        },
+        {
+          "id": "financebench_id_01279",
+          "doc_name": "AMD_2022_10K",
+          "question": "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?",
+          "gold_answer": "In 2022, AMD brought in the most cashflow from Operations",
+          "answer": "Among the three, **operating activities brought in the most cash flow in FY22**, with **net cash provided by operating activities of $3.565 billion**. Investing activities provided $1.999 billion, while financing activities used $3.264 billion of cash. (pages 51, 55)",
+          "retrieved_pages": [
+            51,
+            57,
+            53,
+            47,
+            58
+          ],
+          "correct": true,
+          "judge_reason": "The candidate correctly identifies operating activities as bringing in the most cash flow in FY22, consistent with the gold answer.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 10963,
+          "latency_ms": 944.0020000038203,
+          "error": null,
+          "queries": [
+            "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?"
+          ]
+        },
+        {
+          "id": "financebench_id_01290",
+          "doc_name": "BOEING_2022_10K",
+          "question": "Who are the primary customers of Boeing as of FY2022?",
+          "gold_answer": "Boeing's primary customers as of FY2022 are a limited number of commercial airlines and the US government. The US government accounted for 40% of Boeing's total revenues in FY2022.",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            61,
+            54,
+            21,
+            23,
+            4
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 13376,
+          "latency_ms": 923.3334159944206,
+          "error": null,
+          "queries": [
+            "Who are the primary customers of Boeing as of FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01328",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the quantity of restructuring costs directly outlined in Pepsico's income statements for FY2022? If restructuring costs are not explicitly outlined then state 0.",
+          "gold_answer": "Pepsico's restructuring costs in FY2022 amounted to $411 million .",
+          "answer": "0 (pages 48, 77, 78)",
+          "retrieved_pages": [
+            77,
+            48,
+            108,
+            71,
+            78
+          ],
+          "correct": false,
+          "judge_reason": "The gold answer states Pepsico explicitly reported $411 million of restructuring costs for FY2022, but the candidate incorrectly says 0.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 13383,
+          "latency_ms": 838.6802500026533,
+          "error": null,
+          "queries": [
+            "What is the quantity of restructuring costs directly outlined in Pepsico's income statements for FY2022? If restructuring costs are not explicitly outlined then state 0."
+          ]
+        },
+        {
+          "id": "financebench_id_01351",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "How much has the effective tax rate of American Express changed between FY2021 and FY2022?",
+          "gold_answer": "The effective tax rate for American Express has changed/dropped from 24.6% in FY 2021 to 21.6% in FY 2022.",
+          "answer": "The effective tax rate decreased by 3.0 percentage points, from 24.6% in FY2021 to 21.6% in FY2022. (page 48)",
+          "retrieved_pages": [
+            48,
+            162,
+            98,
+            149,
+            40
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer exactly, stating the effective tax rate fell from 24.6% in FY2021 to 21.6% in FY2022, a decrease of 3.0 percentage points.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 14818,
+          "latency_ms": 1387.5487909972435,
+          "error": null,
+          "queries": [
+            "How much has the effective tax rate of American Express changed between FY2021 and FY2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01964",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "What was the largest liability in American Express's Balance Sheet in 2022?",
+          "gold_answer": "Customer deposits",
+          "answer": "The largest liability on American Express\u2019s 2022 balance sheet was **customer deposits**, with an amount of **$123 billion**. This is shown in the fair value table where financial liabilities equal or approximate fair value total **$123 billion**; it is also consistent with the financing section noting customer deposits on the balance sheet. (page 138)",
+          "retrieved_pages": [
+            125,
+            151,
+            138,
+            124,
+            98
+          ],
+          "correct": true,
+          "judge_reason": "The candidate identifies the same largest liability as the gold answer\u2014customer deposits\u2014and the added amount does not contradict it.",
+          "page_hit": false,
+          "evidence_hit": false,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 12828,
+          "latency_ms": 1331.9718340062536,
+          "error": null,
+          "queries": [
+            "What was the largest liability in American Express's Balance Sheet in 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_01981",
+          "doc_name": "AMERICANEXPRESS_2022_10K",
+          "question": "Was American Express able to retain card members during 2022?",
+          "gold_answer": "Yes",
+          "answer": "Yes. The filing says card member retention remained high in 2022, and that new card acquisitions reached record levels, indicating American Express was able to retain card members during the year (page 44).",
+          "retrieved_pages": [
+            48,
+            88,
+            28,
+            45,
+            44
+          ],
+          "correct": true,
+          "judge_reason": "The candidate answer matches the gold answer by stating that American Express was able to retain card members during 2022.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": false,
+          "distinct_pages": 5,
+          "context_chars": 22864,
+          "latency_ms": 1078.281333000632,
+          "error": null,
+          "queries": [
+            "Was American Express able to retain card members during 2022?"
+          ]
+        },
+        {
+          "id": "financebench_id_03620",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement.",
+          "gold_answer": "$9068.00",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            39,
+            70,
+            102,
+            55,
+            61
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 11705,
+          "latency_ms": 988.9041669957805,
+          "error": null,
+          "queries": [
+            "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement."
+          ]
+        },
+        {
+          "id": "financebench_id_04481",
+          "doc_name": "PEPSICO_2022_10K",
+          "question": "What is the FY2022 unadjusted EBITDA % margin for PepsiCo? Calculate unadjusted EBITDA using unadjusted operating income and D&A (from cash flow statement). Give a response to the question by relying on the details shown in the statement of cash flows and the P&L statement.",
+          "gold_answer": "16.5%",
+          "answer": "Not found in the filing.",
+          "retrieved_pages": [
+            39,
+            61,
+            55,
+            102,
+            48
+          ],
+          "correct": false,
+          "judge_reason": "The answer is a refusal.",
+          "page_hit": true,
+          "evidence_hit": true,
+          "refusal": true,
+          "distinct_pages": 5,
+          "context_chars": 12839,
+          "latency_ms": 898.322916997131,
+          "error": null,
+          "queries": [
+            "What is the FY2022 unadjusted EBITDA % margin for PepsiCo? Calculate unadjusted EBITDA using unadjusted operating income and D&A (from cash flow statement). Give a response to the question by relying on the details shown in the statement of cash flows and the P&L statement."
+          ]
+        }
+      ]
+    }
+  ]
+}

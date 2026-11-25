@@ -98,6 +98,7 @@ answer and the judge's reason. The runner refuses to overwrite an existing file 
 | [006_expand_k10_p8](results/006_expand_k10_p8.json) | expand (full pages, max 8) | 1000 / 200 overlap | 10 | 56.7% ± 3.3 | 63.3% ± 0.0 | 63.3% ± 0.0 | 20.0% ± 3.3 | 1.57 s / 4.23 s* |
 | [007_expand_p5_noexhibits](results/007_expand_p5_noexhibits.json) | expand (full pages, max 5), exhibits excluded | 1000 / 200 overlap | 10 | 55.6% ± 1.9 | 60.0% ± 0.0 | 63.3% ± 0.0 | 15.6% ± 1.9 | 1.51 s / 4.33 s* |
 | [008_rewrite_multi](results/008_rewrite_multi.json) | 007 + multi-query rewriting (3 rewrites, RRF) | 1000 / 200 overlap | 10 per query | 54.4% ± 13.5 | 63.3% ± 5.8 | 64.4% ± 6.9 | 11.1% ± 5.1 | 4.48 s / 8.41 s* |
+| [009_section_header](results/009_section_header.json) | 007 on section-header chunks | 1000 / 200 overlap, `[section]` header | 10 | 48.9% ± 1.9 | 60.0% ± 0.0 | 63.3% ± 0.0 | 26.7% ± 3.3 | 1.10 s / 3.82 s* |
 
 All experiments answer with `gpt-5.4-mini`, embed with `text-embedding-3-small`, and are judged
 by `gpt-5.4`. \*p95 includes a cold start (the first question per filing parses its PDF).
@@ -116,6 +117,8 @@ answers go to the judge. All results were rescored (9 of 720 records changed).
 - **007 (exhibits excluded):** 006's evidence hit at 005's context. Adopted; best config.
 - **008 (multi-query rewriting):** no measurable gain; adds retrieval variance and 3x latency.
   Rejected.
+- **009 (section-header chunking):** same evidence hit, refusals +11 points; headers dilute
+  number-dense statement chunks. Rejected.
 
 ## Roadmap
 
