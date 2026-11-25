@@ -36,3 +36,11 @@ def test_rewrite_settings_are_in_the_experiment_config():
 def test_chunking_defaults_to_plain_and_is_in_the_experiment_config():
     assert settings().chunking == "plain"
     assert settings(chunking="section_header").experiment_config()["chunking"] == "section_header"
+
+
+def test_large_embedding_model_needs_3072_dimensions():
+    assert (
+        settings(embedding_model="text-embedding-3-large", embedding_dim=3072).embedding_dim == 3072
+    )
+    with pytest.raises(ValidationError, match="produces 3072-dimensional vectors"):
+        settings(embedding_model="text-embedding-3-large")  # default EMBEDDING_DIM=1536

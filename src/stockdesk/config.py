@@ -10,6 +10,13 @@ from typing import Literal
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Output dimension of each known OpenAI embedding model (we never request shortened vectors).
+EMBEDDING_DIMS = {
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+}
+
 
 class Settings(BaseSettings):
     """All settings; each field is read from the env var of the same name in upper case."""
@@ -24,7 +31,7 @@ class Settings(BaseSettings):
     # Experiment config
     table: str = "naive_1000"
     embedding_model: str = "text-embedding-3-small"
-    embedding_dim: int = 1536  # must match embedding_model
+    embedding_dim: int = 1536  # must match embedding_model and the table
     llm_model: str | None = None
     judge_model: str = "gpt-5.4"  # grades answers; stronger than llm_model on purpose
     chunk_size: int = 1000
@@ -39,7 +46,13 @@ class Settings(BaseSettings):
     rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries
 
     @model_validator(mode="after")
-    def check_rewrite_retriever(self) -> "Settings":
+    def check_consistency(self) -> "Settings":
+        expected = EMBEDDING_DIMS.get(self.embedding_model)
+        if expected is not None and self.embedding_dim != expected:
+            raise ValueError(
+                f"EMBEDDING_MODEL={self.embedding_model} produces {expected}-dimensional vectors, "
+                f"but EMBEDDING_DIM={self.embedding_dim}"
+            )
         if self.query_rewrite == "multi" and self.retriever != "expand":
             raise ValueError(
                 f"QUERY_REWRITE=multi requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
