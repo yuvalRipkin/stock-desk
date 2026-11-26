@@ -96,8 +96,10 @@ class AgentResult:
     tool_calls: list[ToolCall]  # the calls that ran, in order
     steps: int  # tool calls run (at most MAX_AGENT_STEPS)
     llm_calls: int
-    input_tokens: int
+    input_tokens: int  # incl. cache_read_tokens
     output_tokens: int
+    cache_read_tokens: int  # input tokens served from OpenAI's prompt cache (billed at 10%)
+    llm_usage: list[dict[str, int]]  # per LLM call: input_tokens, output_tokens, cache_read_tokens
     context_chars: int  # characters of tool results sent to the model
 
 
@@ -184,6 +186,16 @@ def build_graph(llm: Any, doc_name: str, max_steps: int):
     return graph.compile()
 
 
+def call_usage(message: AIMessage) -> dict[str, int]:
+    """Token usage of one LLM call; zeros where the API reported nothing."""
+    usage = message.usage_metadata or {}
+    return {
+        "input_tokens": usage.get("input_tokens", 0),
+        "output_tokens": usage.get("output_tokens", 0),
+        "cache_read_tokens": (usage.get("input_token_details") or {}).get("cache_read", 0),
+    }
+
+
 def unique_pages(docs: list[Document]) -> list[Document]:
     """One Document per (doc_name, page), keeping the first seen."""
     seen: dict[tuple[str | None, int], Document] = {}
@@ -216,7 +228,7 @@ def answer(question: str, doc_name: str) -> AgentResult:
 
     messages = state["messages"]
     replies = [m for m in messages if isinstance(m, AIMessage)]
-    usage = [m.usage_metadata or {} for m in replies]
+    usage = [call_usage(m) for m in replies]
     return AgentResult(
         answer=replies[-1].text,
         docs=unique_pages(state["docs"]),
@@ -224,7 +236,9 @@ def answer(question: str, doc_name: str) -> AgentResult:
         tool_calls=state["tool_calls"],
         steps=len(state["tool_calls"]),
         llm_calls=len(replies),
-        input_tokens=sum(u.get("input_tokens", 0) for u in usage),
-        output_tokens=sum(u.get("output_tokens", 0) for u in usage),
+        input_tokens=sum(u["input_tokens"] for u in usage),
+        output_tokens=sum(u["output_tokens"] for u in usage),
+        cache_read_tokens=sum(u["cache_read_tokens"] for u in usage),
+        llm_usage=usage,
         context_chars=sum(len(m.text) for m in messages if isinstance(m, ToolMessage)),
     )

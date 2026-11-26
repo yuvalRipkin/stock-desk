@@ -18,7 +18,15 @@ class FakeLLM:
 
     def invoke(self, messages):
         self.sent.append(messages)
-        return AIMessage(content="Answer: 42 (page 1)")
+        return AIMessage(
+            content="Answer: 42 (page 1)",
+            usage_metadata={
+                "input_tokens": 2000,
+                "output_tokens": 50,
+                "total_tokens": 2050,
+                "input_token_details": {"cache_read": 1024},
+            },
+        )
 
 
 @pytest.fixture
@@ -59,3 +67,9 @@ def test_v2_asks_for_the_exact_refusal_reply():
 
 def test_v2_asks_for_a_final_answer_line():
     assert 'starts with "Answer:"' in PROMPT_V2
+
+
+def test_answer_records_token_usage_including_cache_reads(system_prompt, monkeypatch):
+    system_prompt("v2")  # sets up the fakes and settings
+    result = rag.answer("What was revenue?", "DOC")
+    assert (result.input_tokens, result.output_tokens, result.cache_read_tokens) == (2000, 50, 1024)

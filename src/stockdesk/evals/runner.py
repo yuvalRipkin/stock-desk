@@ -71,9 +71,11 @@ class QuestionRecord:
     answer_chars: int | None = None  # length of the answer; None pre-012
     input_tokens: int | None = None  # summed over the question's LLM calls; None pre-016
     output_tokens: int | None = None
+    cache_read_tokens: int | None = None  # part of input_tokens served from cache; None pre-017
     # ANSWER_MODE=agent only: [{name, args, pages, result}] in order, and tool calls run
     tool_calls: list[dict] | None = None
     steps: int | None = None
+    llm_usage: list[dict] | None = None  # agent: tokens per LLM call; None pre-017
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -184,9 +186,11 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
     record.distinct_pages = distinct_pages(pages)
     record.input_tokens = result.input_tokens
     record.output_tokens = result.output_tokens
+    record.cache_read_tokens = result.cache_read_tokens
     if isinstance(result, agent.AgentResult):
         record.tool_calls = [asdict(call) for call in result.tool_calls]
         record.steps = result.steps
+        record.llm_usage = result.llm_usage
         record.context_chars = result.context_chars  # all tool replies the model read
     else:
         record.context_chars = len(build_context(result.docs))

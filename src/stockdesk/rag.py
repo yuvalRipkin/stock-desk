@@ -25,6 +25,7 @@ class RagResult:
     queries: list[str]  # searched: the question, then any rewrites
     input_tokens: int | None = None
     output_tokens: int | None = None
+    cache_read_tokens: int | None = None  # input tokens served from OpenAI's prompt cache
 
 
 def build_context(docs: list[Document]) -> str:
@@ -56,4 +57,5 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
         queries=retrieval.queries,
         input_tokens=usage.get("input_tokens"),
         output_tokens=usage.get("output_tokens"),
+        cache_read_tokens=(usage.get("input_token_details") or {}).get("cache_read"),
     )

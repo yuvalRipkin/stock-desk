@@ -14,8 +14,10 @@ from stockdesk.rag import RagError
 from stockdesk.retrieval import Retrieval
 
 
-def reply(text: str = "", *calls: tuple[str, dict], tokens: tuple[int, int] = (10, 2)):
-    """A scripted model reply with optional tool calls and token usage."""
+def reply(
+    text: str = "", *calls: tuple[str, dict], tokens: tuple[int, int] = (10, 2), cached: int = 0
+):
+    """A scripted model reply with optional tool calls and token usage (cached: cache reads)."""
     return AIMessage(
         content=text,
         tool_calls=[
@@ -26,6 +28,7 @@ def reply(text: str = "", *calls: tuple[str, dict], tokens: tuple[int, int] = (1
             "input_tokens": tokens[0],
             "output_tokens": tokens[1],
             "total_tokens": sum(tokens),
+            "input_token_details": {"cache_read": cached},
         },
     )
 
@@ -89,8 +92,13 @@ def test_search_calculate_then_answer(run):
     result, llm, searches = run(
         [
             reply("", ("search_filings", {"query": "net sales"}), tokens=(100, 5)),
-            reply("", ("calculate", {"expression": "(120 - 100) / 100 * 100"}), tokens=(200, 6)),
-            reply("Figures...\nAnswer: 20% (page 10)", tokens=(300, 40)),
+            reply(
+                "",
+                ("calculate", {"expression": "(120 - 100) / 100 * 100"}),
+                tokens=(200, 6),
+                cached=0,
+            ),
+            reply("Figures...\nAnswer: 20% (page 10)", tokens=(300, 40), cached=128),
         ]
     )
 
@@ -103,6 +111,12 @@ def test_search_calculate_then_answer(run):
     assert result.steps == 2
     assert result.llm_calls == 3
     assert (result.input_tokens, result.output_tokens) == (600, 51)
+    assert result.cache_read_tokens == 128
+    assert result.llm_usage == [
+        {"input_tokens": 100, "output_tokens": 5, "cache_read_tokens": 0},
+        {"input_tokens": 200, "output_tokens": 6, "cache_read_tokens": 0},
+        {"input_tokens": 300, "output_tokens": 40, "cache_read_tokens": 128},
+    ]
     assert [d.metadata["page"] for d in result.docs] == [10, 11]
     assert result.queries == ["net sales"]
 
@@ -269,6 +283,11 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
         llm_calls=3,
         input_tokens=900,
         output_tokens=80,
+        cache_read_tokens=512,
+        llm_usage=[
+            {"input_tokens": 200, "output_tokens": 20, "cache_read_tokens": 0},
+            {"input_tokens": 700, "output_tokens": 60, "cache_read_tokens": 512},
+        ],
         context_chars=123,
     )
     settings = runner.get_settings().model_copy(update={"answer_mode": "agent"})
@@ -296,5 +315,7 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
         {"name": "search_filings", "args": {"query": "costs"}, "pages": [9], "result": None},
     ]
     assert (record.input_tokens, record.output_tokens) == (900, 80)
+    assert record.cache_read_tokens == 512
+    assert record.llm_usage == result.llm_usage
     assert record.context_chars == 123
     assert record.queries == ["revenue", "costs"]
