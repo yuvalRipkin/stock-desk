@@ -141,3 +141,19 @@ changes are judged by evidence hit.
 - **Findings:** no invented filing figures in the 15 wrong answers. But 3 copying errors into `calculate` (03620: 11,212 for 11,512; 00723: 9,505 and 9,559), each reported as the result; and 11/90 answers cite `calculate` results without calling it (the arithmetic was right). Losses: 01964 3/3 → 1/3, the agent's keyword query ("current liabilities, long-term debt…") missed balance sheet page 97, which the verbatim question found in 012; 00723 2/3 → 1/3, the judgment question was treated as a calculation (6 calls on a pretax-margin proxy, business-model pages 6–7 never retrieved).
 - **Decision:** stepping stone, not final; `ANSWER_MODE` stays `rag` by default. Next: search the original question first, quote `calculate` inputs and results verbatim, and measure cache reads (recorded per LLM call from now on: `cache_read_tokens`, `llm_usage`).
 - **Example:** 00678 (Boeing gross margin) 0/3 → 3/3: the agent's own query ("gross margin net sales cost of sales … gross profit") retrieved the income statement (page 54) that 012 never found.
+
+## 017: prefetch the verbatim question
+
+- **Hypothesis:** searching the question verbatim before the loop (012's query, which found 01964's balance sheet) gives the agent the right pages up front and saves a model call.
+- **Change:** `AGENT_PREFETCH=true`: `search_filings` on the question verbatim in code; its pages go in the first message; the prompt says to search again only if something is missing. Not counted in `MAX_AGENT_STEPS`. Otherwise 016.
+- **Result:** accuracy 70.0% ± 3.3 vs 83.3% (−13.3, beyond noise), evidence hit 76.7% vs 87.8%: 00517, 00678, 00684, 00995 lost all evidence (3/3 → 0/3), though only 00678 lost accuracy with it (the other three were mostly answered from other pages); 01964 gained (1/3 → 3/3, accuracy 3/3). Largest accuracy losses: 00678 3/3 → 0/3, 00222 2/3 → 0/3, 04481 3/3 → 1/3. The model accepted the prefetched pages: no further tool call in 59/90 runs, a new search in 15/90. p50 latency 3.3 s vs 5.5 s.
+- **Timing (first breakdown):** mean 4.0 s per question: model calls 3.3 s (81%; 1.66 calls at ~2.0 s each), searches 0.76 s (19%: embedding 0.37 s, DB 0.03 s, page loading ~0, PDF parse 0.35 s). Without the cold start (5 first-time PDF parses, ~6.4 s each, all in run 1) model calls are 89%. Latency rises with model calls: 3.2 s at 1 call, 6.9 s at 3, 9.9 s at 6. Embedding (~0.3 s) is most of a warm search.
+- **Decision:** rejected; `AGENT_PREFETCH` stays false. The agent's own first query (016, worded like a 10-K) beats the verbatim question; prefetching anchors the model on worse pages. Latency is decided by model calls, not retrieval.
+- **Example:** 00678 (Boeing gross margin) 3/3 → 0/3: the verbatim question never returned the income statement (page 54), and the model did not search for it.
+
+## 018: prefetch + evidence checklist
+
+- **Hypothesis:** forcing a checklist of needed figures with their pages makes the model search for what the prefetched pages lack.
+- **Change:** `AGENT_PREFETCH_PROMPT=v2`: before answering, list each needed figure with its page or MISSING; search for every missing item (one query each, in one step); no general knowledge or substitute figures. Otherwise 017.
+- **Result:** accuracy 70.0% ± 8.8, evidence hit 75.6% ± 5.1 (no change from 017). Checklist written in 87/90 runs, with missing items in 24, followed by a search in 16 of those; 17 runs still had missing items at the end. 00678 recovered (3/3); 00517, 00684, 00995 stayed at 0/3 evidence (the checklist marked nothing missing, citing the wrong pages). p50 latency 4.1 s.
+- **Decision:** rejected. The checklist only catches gaps the model notices; it can't fix pages it wrongly accepts. Prefetch prompt v2 is kept for reference.

@@ -144,6 +144,8 @@ to FinanceBench results over a shared store of all filings.
 | [012_prompt_v2](results/012_prompt_v2.json) | 011 + answer prompt v2 (figures, steps, `Answer:` line) | 1000 / 200 overlap | 10 | 73.3% ± 5.8 | 66.7% ± 0.0 | 66.7% ± 0.0 | 4.4% ± 1.9 | 1.87 s / 5.07 s* |
 | [015_hybrid_bm25](results/015_hybrid_bm25.json) | 012 + BM25 hybrid (BM25 k=10, fused with RRF) | 1000 / 200 overlap | 10 + 10 BM25 | 61.1% ± 3.8 | 56.7% ± 0.0 | 56.7% ± 0.0 | 6.7% ± 0.0 | 2.86 s / 7.07 s* |
 | [016_agent](results/016_agent.json) | 012's retrieval as a LangGraph agent tool (`search_filings`, `calculate`, ≤ 6 calls) | 1000 / 200 overlap | 10 per search | 83.3% ± 3.3 | 87.8% ± 3.8 | 87.8% ± 3.8 | 0.0% ± 0.0 | 5.52 s / 10.59 s* |
+| [017_agent_prefetch](results/017_agent_prefetch.json) | 016 + prefetch: the question verbatim searched before the first model call | 1000 / 200 overlap | 10 per search | 70.0% ± 3.3 | 76.7% ± 0.0 | 76.7% ± 0.0 | 0.0% ± 0.0 | 3.28 s / 7.91 s* |
+| [018_agent_checklist](results/018_agent_checklist.json) | 017 + evidence checklist (missing items must be searched) | 1000 / 200 overlap | 10 per search | 70.0% ± 8.8 | 75.6% ± 5.1 | 75.6% ± 5.1 | 0.0% ± 0.0 | 4.12 s / 8.99 s* |
 
 All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–010 embed with
 `text-embedding-3-small`, 011 with `text-embedding-3-large`. \*p95 includes a cold start (the
@@ -178,6 +180,9 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
   ~$0.0127 vs ~$0.0041 per question at list price (3.1x, before prompt caching), p50 5.5 s vs
   1.9 s. No invented figures, but copying errors into `calculate` and cited calls that never ran.
   Stepping stone, not final.
+- **017 / 018 (prefetch the verbatim question; + evidence checklist):** accuracy 70.0% vs 83.3%
+  (−13.3, beyond noise), evidence hit 76.7% / 75.6% vs 87.8%. The agent's own first query beats
+  the verbatim one. Latency is decided by model calls (~2 s each), not retrieval. Rejected.
 
 ## Roadmap
 
