@@ -67,6 +67,14 @@ def main(argv: list[str] | None = None) -> int:
             f"{t['pages_ms']:.0f}, PDF parses {t['pdf_parses']} in {t['pdf_parse_ms']:.0f}); "
             f"calculate {t['calculate_ms']:.0f} ms"
         )
+        if result.checklist is not None:
+            c = result.checklist
+            print(
+                f"Checklist: {'written' if c['written'] else 'not written'}, {c['items']} items, "
+                f"missing {c['missing'] or 'none'}, searched after: {c['searched_after']} "
+                f"({c['searches_same_step']} in the same step), still missing at the end: "
+                f"{c['final_missing'] or 'none'}"
+            )
     return 0
 
 

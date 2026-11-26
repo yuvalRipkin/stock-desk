@@ -84,3 +84,14 @@ def test_hybrid_defaults_to_none_and_is_in_the_experiment_config():
 def test_hybrid_with_another_retriever_is_rejected():
     with pytest.raises(ValidationError, match="HYBRID=bm25 requires RETRIEVER=expand"):
         settings(retriever="naive", hybrid="bm25")
+
+
+def test_agent_prefetch_prompt_defaults_to_v1_and_is_in_the_experiment_config():
+    assert settings().agent_prefetch_prompt == "v1"
+    config = settings(agent_prefetch=True, agent_prefetch_prompt="v2").experiment_config()
+    assert (config["agent_prefetch"], config["agent_prefetch_prompt"]) == (True, "v2")
+
+
+def test_agent_prefetch_prompt_v2_without_prefetch_is_rejected():
+    with pytest.raises(ValidationError, match="AGENT_PREFETCH_PROMPT=v2 requires AGENT_PREFETCH"):
+        settings(agent_prefetch=False, agent_prefetch_prompt="v2")

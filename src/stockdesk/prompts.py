@@ -55,6 +55,24 @@ _AGENT_SEARCH_PREFETCHED = """\
   (balance sheet, income statement, cash flow statement) or the line items behind a metric
   (e.g. "operating income" and "net sales" for operating margin).
 """
+# AGENT_PREFETCH_PROMPT=v2: the same, plus an evidence checklist that must be filled before
+# answering. evals parse the checklist (agent.checklist), so keep its format in step with that.
+_AGENT_SEARCH_CHECKLIST = """\
+- The question comes with the results of an initial search for the question itself. Read
+  those pages first. Use only facts from them and from pages your own searches return.
+- Before answering, write a checklist of every figure or fact the question needs, each with
+  the page where it appears in the pages you have, in exactly this format:
+  Checklist:
+  - <figure or fact>: page <n>
+  - <figure or fact>: MISSING
+- If any item is MISSING, call search_filings for it before answering: one query per missing
+  item, all issued together in one step. Word each query differently from the question: name
+  the financial statement (balance sheet, income statement, cash flow statement), the 10-K
+  section, or the line items behind a metric (e.g. "operating income" and "net sales" for
+  operating margin). Then update the checklist from the new pages.
+- Never fill a checklist item from general knowledge, and never substitute a related figure
+  for a missing one.
+"""
 _AGENT_REST = f"""\
 - Use calculate for every arithmetic step, including simple ones. Do not do arithmetic in
   your head.
@@ -78,6 +96,9 @@ Cite page numbers as (page 12) or (pages 12, 14)."""
 
 AGENT_PROMPT = _AGENT_INTRO + _AGENT_SEARCH + _AGENT_REST
 AGENT_PREFETCH_PROMPT = _AGENT_INTRO + _AGENT_SEARCH_PREFETCHED + _AGENT_REST
+AGENT_PREFETCH_PROMPT_V2 = _AGENT_INTRO + _AGENT_SEARCH_CHECKLIST + _AGENT_REST
+# selected by the AGENT_PREFETCH_PROMPT setting (AGENT_PREFETCH=true only)
+AGENT_PREFETCH_PROMPTS = {"v1": AGENT_PREFETCH_PROMPT, "v2": AGENT_PREFETCH_PROMPT_V2}
 
 # AGENT_PREFETCH=true: the first user message; formatted with question and context (the pages).
 AGENT_PREFETCH_MESSAGE = """Question: {question}

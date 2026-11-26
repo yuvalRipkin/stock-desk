@@ -10,7 +10,8 @@ on the question's doc_name, whatever arguments the model sends.
 
 With AGENT_PREFETCH=true, search_filings runs on the question verbatim before the loop starts
 and its pages go into the first message. That search is recorded like the model's own (with
-prefetch=True) but does not count against MAX_AGENT_STEPS.
+prefetch=True) but does not count against MAX_AGENT_STEPS. AGENT_PREFETCH_PROMPT picks its
+system prompt; v2 asks for an evidence checklist, which is parsed into the result.
 
 Every run records a timing breakdown: each model call, each search (embedding, DB query, page
 loading, first-time PDF parse) and each calculate call.
@@ -33,12 +34,13 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
+from stockdesk.agent import checklist
 from stockdesk.agent.calculate import calculate_tool
 from stockdesk.config import get_settings
 from stockdesk.prompts import (
     AGENT_LIMIT_MESSAGE,
     AGENT_PREFETCH_MESSAGE,
-    AGENT_PREFETCH_PROMPT,
+    AGENT_PREFETCH_PROMPTS,
     AGENT_PROMPT,
 )
 from stockdesk.rag import RagError, build_context
@@ -121,6 +123,7 @@ class AgentResult:
     llm_usage: list[dict[str, int]]  # per LLM call: input_tokens, output_tokens, cache_read_tokens
     context_chars: int  # characters of search pages and tool results sent to the model
     timing: dict[str, Any]  # per-question breakdown, see timing_summary()
+    checklist: dict | None = None  # AGENT_PREFETCH_PROMPT=v2: checklist.summarize(); else None
 
 
 class AgentState(TypedDict):
@@ -298,7 +301,7 @@ def answer(question: str, doc_name: str) -> AgentResult:
     if settings.agent_prefetch:
         context, record, docs, queries = prefetch(question, doc_name)
         messages = [
-            SystemMessage(AGENT_PREFETCH_PROMPT),
+            SystemMessage(AGENT_PREFETCH_PROMPTS[settings.agent_prefetch_prompt]),
             HumanMessage(AGENT_PREFETCH_MESSAGE.format(question=question, context=context)),
         ]
         initial = {"tool_calls": [record], "docs": docs, "queries": queries}
@@ -329,4 +332,10 @@ def answer(question: str, doc_name: str) -> AgentResult:
         context_chars=len(context)
         + sum(len(m.text) for m in messages if isinstance(m, ToolMessage)),
         timing=timing_summary(state["model_ms"], state["tool_calls"]),
+        checklist=checklist.summarize(replies) if uses_checklist(settings) else None,
     )
+
+
+def uses_checklist(settings: Any) -> bool:
+    """True if the system prompt asks for an evidence checklist (prefetch prompt v2)."""
+    return settings.agent_prefetch and settings.agent_prefetch_prompt == "v2"

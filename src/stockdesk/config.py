@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     answer_mode: Literal["rag", "agent"] = "rag"  # agent: LangGraph tool loop (stockdesk.agent)
     max_agent_steps: int = Field(default=6, ge=1)  # agent: tool calls per question
     agent_prefetch: bool = False  # agent: search the question verbatim before the first model call
+    agent_prefetch_prompt: Literal["v1", "v2"] = (
+        "v1"  # prompts.AGENT_PREFETCH_PROMPTS; v2: checklist
+    )
 
     @model_validator(mode="after")
     def check_consistency(self) -> "Settings":
@@ -66,6 +69,10 @@ class Settings(BaseSettings):
         if self.hybrid != "none" and self.retriever != "expand":
             raise ValueError(
                 f"HYBRID={self.hybrid} requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
+            )
+        if self.agent_prefetch_prompt != "v1" and not self.agent_prefetch:
+            raise ValueError(
+                f"AGENT_PREFETCH_PROMPT={self.agent_prefetch_prompt} requires AGENT_PREFETCH=true"
             )
         return self
 

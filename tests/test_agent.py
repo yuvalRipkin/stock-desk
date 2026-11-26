@@ -9,7 +9,12 @@ from stockdesk.agent import graph
 from stockdesk.evals import runner
 from stockdesk.evals.dataset import EvalCase
 from stockdesk.evals.judge import Verdict
-from stockdesk.prompts import AGENT_LIMIT_MESSAGE, AGENT_PREFETCH_PROMPT, AGENT_PROMPT
+from stockdesk.prompts import (
+    AGENT_LIMIT_MESSAGE,
+    AGENT_PREFETCH_PROMPT,
+    AGENT_PREFETCH_PROMPT_V2,
+    AGENT_PROMPT,
+)
 from stockdesk.rag import RagError
 from stockdesk.retrieval import Retrieval
 
@@ -79,7 +84,11 @@ def run(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(graph, "get_retriever", lambda name: fake_search)
 
     def _run(
-        replies: list[AIMessage], max_steps: int = 6, doc_name: str = "DOC", prefetch: bool = False
+        replies: list[AIMessage],
+        max_steps: int = 6,
+        doc_name: str = "DOC",
+        prefetch: bool = False,
+        prefetch_prompt: str = "v1",
     ):
         llm = ScriptedLLM(replies, events)
         settings = graph.get_settings().model_copy(
@@ -88,6 +97,7 @@ def run(monkeypatch: pytest.MonkeyPatch):
                 "max_agent_steps": max_steps,
                 "retrieval_k": 7,
                 "agent_prefetch": prefetch,
+                "agent_prefetch_prompt": prefetch_prompt,
             }
         )
         monkeypatch.setattr(graph, "get_settings", lambda: settings)
@@ -331,6 +341,80 @@ def test_without_prefetch_the_first_model_call_is_unchanged(run):
     assert not any(c.prefetch for c in result.tool_calls)
 
 
+# --- evidence checklist (AGENT_PREFETCH_PROMPT=v2) ---------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "version, prompt", [("v1", AGENT_PREFETCH_PROMPT), ("v2", AGENT_PREFETCH_PROMPT_V2)]
+)
+def test_prefetch_prompt_setting_selects_the_system_prompt(run, version, prompt):
+    _, llm, _ = run([reply("Answer: x")], prefetch=True, prefetch_prompt=version)
+
+    assert llm.calls[0][1][0].content == prompt
+
+
+def test_v1_prompt_is_unchanged_and_v2_asks_for_a_checklist():
+    assert "Checklist:" not in AGENT_PREFETCH_PROMPT
+    assert "Checklist:" in AGENT_PREFETCH_PROMPT_V2
+    assert "one query per missing" in AGENT_PREFETCH_PROMPT_V2
+    assert "all issued together in one step" in AGENT_PREFETCH_PROMPT_V2
+    assert "general knowledge" in AGENT_PREFETCH_PROMPT_V2
+
+
+def test_checklist_with_missing_items_then_searches_is_recorded(run):
+    result, _, searches = run(
+        [
+            reply(
+                "Checklist:\n- Revenue 2022: page 10\n- Debt 2022: MISSING\n- Cash 2022: MISSING",
+                ("search_filings", {"query": "long-term debt"}),
+                ("search_filings", {"query": "cash and cash equivalents"}),
+            ),
+            reply(
+                "Checklist:\n- Revenue 2022: page 10\n- Debt 2022: page 20\n- Cash: page 30\n\n"
+                "Answer: x"
+            ),
+        ],
+        prefetch=True,
+        prefetch_prompt="v2",
+    )
+
+    assert [q for q, _, _ in searches] == [
+        "What was revenue?",
+        "long-term debt",
+        "cash and cash equivalents",
+    ]
+    assert result.checklist == {
+        "written": True,
+        "items": 3,
+        "missing": ["Debt 2022: MISSING", "Cash 2022: MISSING"],
+        "searches_same_step": 2,
+        "searched_after": True,
+        "final_missing": [],
+    }
+
+
+def test_checklist_with_missing_items_but_no_search_is_recorded(run):
+    result, _, searches = run(
+        [reply("Checklist:\n- Debt 2022: MISSING\n\nAnswer: about $40 billion")],
+        prefetch=True,
+        prefetch_prompt="v2",
+    )
+
+    assert len(searches) == 1  # the prefetch only
+    assert result.checklist["missing"] == ["Debt 2022: MISSING"]
+    assert result.checklist["searched_after"] is False
+
+
+def test_checklist_is_not_recorded_with_the_v1_prompt(run):
+    result, _, _ = run(
+        [reply("Checklist:\n- Debt 2022: MISSING\n\nAnswer: x")],
+        prefetch=True,
+        prefetch_prompt="v1",
+    )
+
+    assert result.checklist is None
+
+
 # --- timing -------------------------------------------------------------------------------------
 
 
@@ -439,6 +523,14 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
         ],
         context_chars=123,
         timing=TIMING,
+        checklist={
+            "written": True,
+            "items": 1,
+            "missing": [],
+            "searches_same_step": 0,
+            "searched_after": False,
+            "final_missing": [],
+        },
     )
     settings = runner.get_settings().model_copy(update={"answer_mode": "agent"})
     monkeypatch.setattr(runner, "get_settings", lambda: settings)
@@ -469,5 +561,6 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
     assert record.cache_read_tokens == 512
     assert record.llm_usage == result.llm_usage
     assert record.timing == TIMING
+    assert record.checklist == result.checklist
     assert record.context_chars == 123
     assert record.queries == ["revenue", "costs"]

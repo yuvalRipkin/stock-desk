@@ -94,6 +94,7 @@ class QuestionRecord:
     steps: int | None = None
     llm_usage: list[dict] | None = None  # agent: tokens per LLM call; None pre-017
     timing: dict | None = None  # agent: graph.timing_summary() breakdown; None pre-017
+    checklist: dict | None = None  # AGENT_PREFETCH_PROMPT=v2: agent.checklist.summarize()
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -242,6 +243,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
         record.steps = result.steps
         record.llm_usage = result.llm_usage
         record.timing = result.timing
+        record.checklist = result.checklist
         record.context_chars = result.context_chars  # all tool replies the model read
     else:
         record.context_chars = len(build_context(result.docs))
