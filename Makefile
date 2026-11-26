@@ -1,7 +1,7 @@
 # dev (the tuning filings), test (held out) or all
 SPLIT ?= dev
 
-.PHONY: install db-up db-down fetch ingest ask eval lint format test
+.PHONY: install db-up db-down fetch ingest ask eval grounded lint format test
 
 install:
 	uv sync
@@ -37,6 +37,13 @@ ifndef NAME
 	$(error usage: make eval NAME=001_naive_1000 [RUNS=3] [SPLIT=dev])
 endif
 	uv run python -m stockdesk.evals.runner --name $(NAME) --runs $(RUNS) --split $(SPLIT)
+
+# groundedness metrics for existing results files (reads the PDFs; no RAG, agent or judge calls)
+grounded:
+ifndef FILES
+	$(error usage: make grounded FILES="results/012_prompt_v2.json results/016_agent.json")
+endif
+	uv run python -m stockdesk.evals.groundedness $(FILES)
 
 lint:
 	uv run ruff check .

@@ -98,6 +98,13 @@ Each run answers all 30 questions with `stockdesk.rag.answer`, then:
 - **Page hit / evidence hit:** whether any gold evidence page is among the retrieved pages, and
   whether any gold evidence text fuzzy-matches a retrieved chunk.
 - **Refusal rate:** how often the answer is only "Not found in the filing."
+- **Groundedness** (`evals/groundedness.py`; does not change the metrics above): every number in
+  the answer must be on a retrieved page, in a `calculate` result from the trace, or in the
+  question (rounding and million/billion scaling allowed; years, page numbers and list numbering
+  ignored); cited pages must be retrieved and hold at least one of the figures; a claimed
+  `calculate` result must match a call that ran. An answer failing any check is flagged. Reported
+  separately for correct and wrong answers. For results files written before these checks:
+  `make grounded FILES="results/016_agent.json ..."` (re-reads the PDFs; no RAG, agent or judge).
 
 The defaults in `config.py` are the best config so far. Each results file records the config
 it ran with; set those values as environment variables to reproduce an earlier experiment
@@ -188,6 +195,19 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
   (−7.7, at the noise edge); p50 4.6 s vs 5.5 s, ~$0.0069 vs ~$0.0127 per question. No copying
   errors (vs 3); the short format likely cuts reasoning on judgment questions. Rejected.
 
+### Groundedness (dev, pooled over 3 runs; correct / wrong answers)
+
+| Run | Grounded numbers | Failed citation check | False `calculate` claim | Flagged |
+|---|---|---|---|---|
+| 012 (RAG) | 80.6% / 86.7% | 12.1% / 4.2% | n/a | 45.5% / 33.3% |
+| 016 (agent) | 87.7% / 85.4% | 17.3% / 13.3% | 63.6% / 80.0% (of 16 claiming) | 50.7% / 73.3% |
+| 020 (agent, tools v2) | 88.8% / 94.9% | 21.4% / 10.0% | n/a (none claimed) | 55.7% / 35.0% |
+
+Most untraceable numbers are the model's own arithmetic, done without `calculate` (in 020 about
+3 in 4 are a single +, −, ×, ÷ of grounded figures). Invented filing figures are rare but
+present (012 00720: $54,578 million, in no page of the filing). Citation failures are mostly a
+cited page that was never retrieved. Flags do not predict wrong answers.
+
 ## Roadmap
 
 - **Phase 1: Ingestion + baseline RAG** (done)
@@ -197,8 +217,8 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 - **Phase 3: LangGraph agent** (in progress): `search_filings` as a tool, `calculate`, multi-step
   retrieval. Developed on dev, measured once on test.
   - Step 1 (done, 016): minimal ReAct agent, `ANSWER_MODE=agent`.
-- **Phase 4: Eval quality** (planned): judge validation against human labels, an automated
-  citation check (do the cited pages contain the stated figures), eval in CI.
+- **Phase 4: Eval quality** (in progress): groundedness checks (numbers, citations, `calculate`
+  claims; done), judge validation against human labels, eval in CI.
 - **Phase 5: Observability and UI** (planned): tracing, cost per question, Gradio UI.
 
 ## License

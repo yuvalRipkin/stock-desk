@@ -25,6 +25,8 @@ from stockdesk import agent, rag
 from stockdesk.config import get_settings
 from stockdesk.data import ROOT, SPLITS
 from stockdesk.evals.dataset import EvalCase, load_cases
+from stockdesk.evals.groundedness import GROUNDEDNESS_METRICS, check_record
+from stockdesk.evals.groundedness import summarize as summarize_groundedness
 from stockdesk.evals.judge import judge
 from stockdesk.evals.metrics import (
     METRICS_VERSION,
@@ -65,6 +67,9 @@ TIMING_METRICS = [
     "avg_calculate_ms",  # per calculate call
 ]
 SUMMARY_METRICS += TIMING_METRICS
+# numbers, citations and calculate claims traced to retrieved pages and tool calls
+# (evals.groundedness); None in files written before it (see its command for those)
+SUMMARY_METRICS += GROUNDEDNESS_METRICS
 
 
 @dataclass
@@ -95,6 +100,7 @@ class QuestionRecord:
     llm_usage: list[dict] | None = None  # agent: tokens per LLM call; None pre-017
     timing: dict | None = None  # agent: graph.timing_summary() breakdown; None pre-017
     checklist: dict | None = None  # AGENT_PREFETCH_PROMPT=v2: agent.checklist.summarize()
+    groundedness: dict | None = None  # evals.groundedness.check_record(); None in older files
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -133,6 +139,7 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
     latencies = [r.latency_ms for r in ok if r.latency_ms is not None]
     return {
         **summarize_tokens_and_timing(ok),
+        **summarize_groundedness([vars(r) for r in records]),
         "n": n,
         "accuracy": rate("correct"),
         "page_hit_rate": rate("page_hit"),
@@ -196,6 +203,14 @@ def aggregate(summaries: list[dict]) -> dict[str, dict[str, float | None]]:
 # --- running ----------------------------------------------------------------------------------
 
 
+def retrieved_text(docs: list) -> dict[int, str]:
+    """The text the model saw, per page (a page's chunks joined), for the groundedness check."""
+    pages: dict[int, str] = {}
+    for d in docs:
+        pages[d.metadata["page"]] = pages.get(d.metadata["page"], "") + "\n" + d.page_content
+    return pages
+
+
 def evaluate_case(case: EvalCase) -> QuestionRecord:
     """Answer, score and judge one case. Never raises: errors are recorded on the record."""
     record = QuestionRecord(
@@ -247,6 +262,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
         record.context_chars = result.context_chars  # all tool replies the model read
     else:
         record.context_chars = len(build_context(result.docs))
+    record.groundedness = check_record(asdict(record), retrieved_text(result.docs))
 
     try:
         verdict = judge(case.question, case.gold_answer, result.answer)
