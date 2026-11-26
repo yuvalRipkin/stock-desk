@@ -138,6 +138,7 @@ to FinanceBench results over a shared store of all filings.
 | [010_rerank](results/010_rerank.json) | 007 + cross-encoder re-ranking (bge-reranker-base, 30 candidates) | 1000 / 200 overlap | 30 → re-ranked | 45.6% ± 1.9 | 43.3% ± 0.0 | 43.3% ± 0.0 | 34.4% ± 3.8 | 1.91 s / 5.36 s* |
 | [011_large_embedding](results/011_large_embedding.json) | 007 on `text-embedding-3-large` (3072 dims) | 1000 / 200 overlap | 10 | 67.8% ± 5.1 | 66.7% ± 0.0 | 66.7% ± 0.0 | 7.8% ± 1.9 | 1.21 s / 3.78 s* |
 | [012_prompt_v2](results/012_prompt_v2.json) | 011 + answer prompt v2 (figures, steps, `Answer:` line) | 1000 / 200 overlap | 10 | 73.3% ± 5.8 | 66.7% ± 0.0 | 66.7% ± 0.0 | 4.4% ± 1.9 | 1.87 s / 5.07 s* |
+| [015_hybrid_bm25](results/015_hybrid_bm25.json) | 012 + BM25 hybrid (BM25 k=10, fused with RRF) | 1000 / 200 overlap | 10 + 10 BM25 | 61.1% ± 3.8 | 56.7% ± 0.0 | 56.7% ± 0.0 | 6.7% ± 0.0 | 2.86 s / 7.07 s* |
 
 All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–010 embed with
 `text-embedding-3-small`, 011 with `text-embedding-3-large`. \*p95 includes a cold start (the
@@ -166,6 +167,8 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
   refusals halved, no latency cost. Adopted.
 - **012 (answer prompt v2):** accuracy 73.3% vs 67.8% (+5.5, within noise but consistent: 6
   questions up, 2 down, identical retrieval); refusals 4.4%. Adopted; now the default config.
+- **015 (BM25 + vector hybrid):** evidence hit 56.7% vs 66.7% (−3 questions), accuracy 61.1% vs
+  73.3% (−12.2, beyond noise); BM25-only pages displace vector's 4th–5th pages. Rejected.
 
 ## Roadmap
 

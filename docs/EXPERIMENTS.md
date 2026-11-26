@@ -124,3 +124,11 @@ changes are judged by evidence hit.
 - **Result:** accuracy 38.1% ± 1.3 → 71.9% ± 1.7 (+33.8; dev gain was +34.4), evidence hit 47.5% → 79.2%, page hit 53.3% → 79.2%, refusals 40.0% → 5.0%, context 4.5k → 15.5k chars. Latency not compared: the two runs ran in parallel.
 - **Decision:** the tuning generalizes. Retrieval is filtered to the question's filing (single-document setting), so results are not directly comparable to shared-store FinanceBench numbers.
 - **Setup notes:** some test PDFs are AES-encrypted and need `pypdf[crypto]`; 14 PDFs have empty pages (63 in all, no gold pages); the exhibit cutoff was found in 29 of 79 filings (nothing is excluded in the rest). A btree index on `(doc_name, page)` cut per-query execution from ~50–62 ms to ~7–14 ms at 54,666 rows.
+
+## 015: BM25 + vector hybrid
+
+- **Hypothesis:** exact-term matching ranks pages that vector search misses (targets 00735, 01028: gold page never retrieved).
+- **Change:** `HYBRID=bm25`: BM25 (`rank_bm25`, per-filing in-memory index, exhibits excluded) ranks 10 chunks, fused with vector's 10 by RRF, then pages as in 012. Dev only.
+- **Result:** evidence hit 56.7% vs 66.7% (−3 questions: 00585, 01079, 01964; none gained), accuracy 61.1% vs 73.3% (−12.2, beyond noise), refusals 6.7%. 00735 and 01028 not fixed. 01964 and 00684 3/3 → 0/3, 00723 2/3 → 0/3. Cause: with equal RRF weights and a 5-page cap, BM25's rank-2/3 hits tie vector's and push out vector's 4th–5th pages; BM25 matches words ("liability", "margin"), not the statement.
+- **Decision:** rejected; `HYBRID` stays `none`. Not tuned further (e.g. BM25 weighting), to avoid open-ended tuning on dev.
+- **Example:** 01964 (AmEx largest liability): BM25-only pages 84 (Other matters) and 63 (Corporate & Other) took slots 3 and 5; balance sheet page 97 (vector rank 4) fell out.
