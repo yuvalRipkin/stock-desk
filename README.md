@@ -146,6 +146,7 @@ to FinanceBench results over a shared store of all filings.
 | [016_agent](results/016_agent.json) | 012's retrieval as a LangGraph agent tool (`search_filings`, `calculate`, ≤ 6 calls) | 1000 / 200 overlap | 10 per search | 83.3% ± 3.3 | 87.8% ± 3.8 | 87.8% ± 3.8 | 0.0% ± 0.0 | 5.52 s / 10.59 s* |
 | [017_agent_prefetch](results/017_agent_prefetch.json) | 016 + prefetch: the question verbatim searched before the first model call | 1000 / 200 overlap | 10 per search | 70.0% ± 3.3 | 76.7% ± 0.0 | 76.7% ± 0.0 | 0.0% ± 0.0 | 3.28 s / 7.91 s* |
 | [018_agent_checklist](results/018_agent_checklist.json) | 017 + evidence checklist (missing items must be searched) | 1000 / 200 overlap | 10 per search | 70.0% ± 8.8 | 75.6% ± 5.1 | 75.6% ± 5.1 | 0.0% ± 0.0 | 4.12 s / 8.99 s* |
+| [019_agent_v2](results/019_agent_v2.json) | 016 + list tools (≤ 3 queries / 10 expressions per call), arithmetic discipline, short answer | 1000 / 200 overlap | 10 per query | 75.6% ± 3.8 | 85.6% ± 1.9 | 85.6% ± 1.9 | 1.1% ± 1.9 | 4.57 s / 8.17 s* |
 
 All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–010 embed with
 `text-embedding-3-small`, 011 with `text-embedding-3-large`. \*p95 includes a cold start (the
@@ -183,6 +184,9 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 - **017 / 018 (prefetch the verbatim question; + evidence checklist):** accuracy 70.0% vs 83.3%
   (−13.3, beyond noise), evidence hit 76.7% / 75.6% vs 87.8%. The agent's own first query beats
   the verbatim one. Latency is decided by model calls (~2 s each), not retrieval. Rejected.
+- **019 (agent v2: list tools, arithmetic discipline, short answer):** accuracy 75.6% vs 83.3%
+  (−7.7, at the noise edge); p50 4.6 s vs 5.5 s, ~$0.0069 vs ~$0.0127 per question. No copying
+  errors (vs 3); the short format likely cuts reasoning on judgment questions. Rejected.
 
 ## Roadmap
 

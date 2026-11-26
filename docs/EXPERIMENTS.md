@@ -157,3 +157,24 @@ changes are judged by evidence hit.
 - **Change:** `AGENT_PREFETCH_PROMPT=v2`: before answering, list each needed figure with its page or MISSING; search for every missing item (one query each, in one step); no general knowledge or substitute figures. Otherwise 017.
 - **Result:** accuracy 70.0% ± 8.8, evidence hit 75.6% ± 5.1 (no change from 017). Checklist written in 87/90 runs, with missing items in 24, followed by a search in 16 of those; 17 runs still had missing items at the end. 00678 recovered (3/3); 00517, 00684, 00995 stayed at 0/3 evidence (the checklist marked nothing missing, citing the wrong pages). p50 latency 4.1 s.
 - **Decision:** rejected. The checklist only catches gaps the model notices; it can't fix pages it wrongly accepts. Prefetch prompt v2 is kept for reference.
+
+## 019: agent v2 (list tools, arithmetic discipline, short answer)
+
+- **Hypothesis:** fewer model calls (several searches or expressions per call), stricter arithmetic and a shorter answer cut latency and cost, and remove 016's copying errors and uncalled `calculate` claims.
+- **Change:** `AGENT_VERSION=v2` on 016: `search_filings(queries)` runs up to 3 queries per call (each page once), `calculate(expressions)` up to 10; one step per call. Prompt: put all searches and all writable expressions in one call each, copy inputs digit by digit, never write a self-computed number or claim an uncalled result; answer as Figures / Calculation / at most two sentences of Assessment / Answer.
+- **Result:**
+
+  | | 016 | 019 |
+  |---|---|---|
+  | Accuracy | 83.3% ± 3.3 | 75.6% ± 3.8 |
+  | Evidence hit | 87.8% | 85.6% |
+  | Latency p50 / mean | 5.5 s / 6.1 s | 4.6 s / 5.0 s |
+  | Tool calls per question | 2.56 (limit hit 11/90) | 1.32 (limit hit 0/90) |
+  | Tokens in / out | 14.6k / 384 | 9.4k / 252 |
+  | Cost per question | $0.0127 (list) | $0.0082 (list), $0.0069 with measured cache reads (20%) |
+  | Answer length | 1,179 chars | 703 chars |
+
+  2.32 model calls per question at 1.55 s each (017: 1.98 s); latency still follows model calls (4.3 s at 2 calls, 6.3 s at 3). ~3 queries per search call, 2.8 expressions per calculate call.
+- **Arithmetic discipline:** 0 copying errors into `calculate` (016: 3); arithmetic without a `calculate` call in 4/90 answers (016: 11/90 cited uncalled results). Not gone: 00517 run 1 shows `55893 / 66608 * 100 = 83.87247558544594` with no call.
+- **Losses:** 00517 3/3 → 1/3, 00678 3/3 → 1/3, 01079 2/3 → 0/3, 00222 2/3 → 0/3, 00723 and 00799 1/3 → 0/3; gains 01964 1/3 → 3/3, 03620 2/3 → 3/3. Likely cause: the short format cuts reasoning on judgment questions. 00678 had the figures (revenues page 54; cost of sales 94.7% vs 95.2%, page 27) but skipped the calculation and concluded gross margin "isn't useful" for Boeing; 00517 split revenue by products/services instead of segments; 01079 stated FY2022/FY2021 had no acquisitions.
+- **Decision:** rejected; `AGENT_VERSION` stays v1. Next (020): keep the list tools and discipline, restore the full answer format, to separate the two effects.
