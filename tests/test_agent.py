@@ -16,6 +16,7 @@ from stockdesk.prompts import (
     AGENT_PROMPT,
     AGENT_PROMPT_V2,
     REFUSAL_PHRASE,
+    agent_prompt,
 )
 from stockdesk.rag import RagError
 from stockdesk.retrieval import Retrieval
@@ -93,7 +94,8 @@ def run(monkeypatch: pytest.MonkeyPatch):
         doc_name: str = "DOC",
         prefetch: bool = False,
         prefetch_prompt: str = "v1",
-        version: str = "v1",
+        tools: str = "v1",
+        answer_format: str = "v1",
     ):
         llm = ScriptedLLM(replies, events)
         settings = graph.get_settings().model_copy(
@@ -103,7 +105,8 @@ def run(monkeypatch: pytest.MonkeyPatch):
                 "retrieval_k": 7,
                 "agent_prefetch": prefetch,
                 "agent_prefetch_prompt": prefetch_prompt,
-                "agent_version": version,
+                "agent_tools": tools,
+                "agent_answer_format": answer_format,
             }
         )
         monkeypatch.setattr(graph, "get_settings", lambda: settings)
@@ -421,7 +424,46 @@ def test_checklist_is_not_recorded_with_the_v1_prompt(run):
     assert result.checklist is None
 
 
-# --- AGENT_VERSION=v2: list-taking tools, arithmetic discipline, short answer ----------------
+# --- AGENT_TOOLS / AGENT_ANSWER_FORMAT: list tools + discipline, short answer -------------
+
+
+@pytest.mark.parametrize("tools", ["v1", "v2"])
+@pytest.mark.parametrize("answer_format", ["v1", "v2"])
+def test_each_combination_builds_its_prompt_and_tools(run, tools, answer_format):
+    _, llm, _ = run([reply("Answer: x")], tools=tools, answer_format=answer_format)
+
+    system = llm.calls[0][1][0].content
+    assert system == agent_prompt(tools, answer_format)
+    assert llm.bound == [graph.TOOLS_BY_VERSION[tools]] * 2
+    # the tools text matches the schemas the model is given...
+    assert ("search_filings(queries)" in system) == (tools == "v2")
+    assert ("search_filings(query)" in system) == (tools == "v1")
+    assert ("digit by digit" in system) == (tools == "v2")
+    # ...and the answer format is the one asked for
+    assert ("Write the final answer in this order" in system) == (answer_format == "v1")
+    assert ("Answer briefly, in this format" in system) == (answer_format == "v2")
+    assert system.endswith("Cite page numbers as (page 12) or (pages 12, 14).")
+    assert f'reply with exactly\n"{REFUSAL_PHRASE}."' in system
+
+
+def test_020_is_list_tools_with_the_full_answer_format(run):
+    _, llm, _ = run(
+        [reply("", ("calculate", {"expressions": ["1 + 1", "2 * 3"]})), reply("Answer: x")],
+        tools="v2",
+        answer_format="v1",
+    )
+
+    system = llm.calls[0][1][0].content
+    assert "calculate(expressions)" in system
+    assert "Write the final answer in this order" in system
+    assert "at most two sentences" not in system
+    [tool_reply] = tool_messages(llm.calls[-1][1])
+    assert tool_reply.content == "1 + 1 = 2\n2 * 3 = 6"
+
+
+def test_default_prompts_reproduce_016_and_019():
+    assert agent_prompt() == AGENT_PROMPT == agent_prompt("v1", "v1")
+    assert AGENT_PROMPT_V2 == agent_prompt("v2", "v2")
 
 
 def test_v1_binds_the_single_item_tools_and_v1_prompt(run):
@@ -432,7 +474,7 @@ def test_v1_binds_the_single_item_tools_and_v1_prompt(run):
 
 
 def test_v2_binds_the_list_tools_and_v2_prompt(run):
-    _, llm, _ = run([reply("Answer: x")], version="v2")
+    _, llm, _ = run([reply("Answer: x")], tools="v2", answer_format="v2")
 
     assert llm.bound == [graph.TOOLS_V2, graph.TOOLS_V2]
     assert llm.calls[0][1][0].content == AGENT_PROMPT_V2
@@ -461,7 +503,7 @@ def test_v2_search_runs_every_query_in_one_step(run):
             reply("", ("search_filings", {"queries": ["balance sheet", "income statement"]})),
             reply("Answer: x"),
         ],
-        version="v2",
+        tools="v2",
     )
 
     assert searches == [("balance sheet", "DOC", 7), ("income statement", "DOC", 7)]
@@ -485,7 +527,7 @@ def test_v2_search_shows_a_page_found_by_two_queries_once(run, monkeypatch):
     monkeypatch.setattr(graph, "get_retriever", lambda name: lambda q, d, k: Retrieval([page], [q]))
     _, llm, _ = run(
         [reply("", ("search_filings", {"queries": ["a", "b"]})), reply("Answer: x")],
-        version="v2",
+        tools="v2",
     )
 
     [tool_reply] = tool_messages(llm.calls[-1][1])
@@ -498,7 +540,7 @@ def test_v2_search_runs_at_most_three_queries_per_call(run):
             reply("", ("search_filings", {"queries": ["a", "b", "c", "d"]})),
             reply("Answer: x"),
         ],
-        version="v2",
+        tools="v2",
     )
 
     assert [q for q, _, _ in searches] == ["a", "b", "c"]
@@ -512,7 +554,7 @@ def test_v2_search_is_still_bound_to_the_question_filing(run):
             reply("", ("search_filings", {"queries": ["revenue"], "doc_name": "OTHER_2022_10K"})),
             reply("Answer: x"),
         ],
-        version="v2",
+        tools="v2",
     )
 
     assert searches == [("revenue", "DOC", 7)]
@@ -522,7 +564,7 @@ def test_v2_calculate_evaluates_every_expression_in_one_step(run):
     expressions = ["23601 - 16434", "(23601 - 16434) / 16434 * 100", "1 / 0", "__import__('os')"]
     result, llm, _ = run(
         [reply("", ("calculate", {"expressions": expressions})), reply("Answer: x")],
-        version="v2",
+        tools="v2",
     )
 
     assert result.steps == 1
@@ -557,7 +599,7 @@ def test_v2_calculate_caps_the_list_and_rejects_bad_arguments():
 def test_v2_step_limit_counts_calls_not_items(run):
     many = ("search_filings", {"queries": ["a", "b", "c"]})
     result, llm, searches = run(
-        [reply("", many), reply("", many), reply("Answer: x")], max_steps=2, version="v2"
+        [reply("", many), reply("", many), reply("Answer: x")], max_steps=2, tools="v2"
     )
 
     assert len(searches) == 6

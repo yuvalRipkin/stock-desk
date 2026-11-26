@@ -97,11 +97,14 @@ def test_agent_prefetch_prompt_v2_without_prefetch_is_rejected():
         settings(agent_prefetch=False, agent_prefetch_prompt="v2")
 
 
-def test_agent_version_defaults_to_v1_and_is_in_the_experiment_config():
-    assert settings().agent_version == "v1"
-    assert settings(agent_version="v2").experiment_config()["agent_version"] == "v2"
+def test_agent_tools_and_answer_format_default_to_016_and_are_in_the_experiment_config():
+    assert (settings().agent_tools, settings().agent_answer_format) == ("v1", "v1")
+    config = settings(agent_tools="v2", agent_answer_format="v1").experiment_config()
+    assert (config["agent_tools"], config["agent_answer_format"]) == ("v2", "v1")
+    assert "agent_version" not in config
 
 
-def test_agent_version_v2_with_prefetch_is_rejected():
-    with pytest.raises(ValidationError, match="AGENT_VERSION=v2 does not support AGENT_PREFETCH"):
-        settings(agent_version="v2", agent_prefetch=True)
+@pytest.mark.parametrize("tools, answer_format", [("v2", "v1"), ("v1", "v2"), ("v2", "v2")])
+def test_prefetch_with_non_default_tools_or_format_is_rejected(tools, answer_format):
+    with pytest.raises(ValidationError, match="AGENT_PREFETCH=true supports only AGENT_TOOLS=v1"):
+        settings(agent_tools=tools, agent_answer_format=answer_format, agent_prefetch=True)

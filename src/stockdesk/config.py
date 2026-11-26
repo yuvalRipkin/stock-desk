@@ -49,8 +49,9 @@ class Settings(BaseSettings):
     answer_prompt: Literal["v1", "v2"] = "v2"  # prompts.ANSWER_PROMPTS; v2: figures, steps, Answer:
     answer_mode: Literal["rag", "agent"] = "rag"  # agent: LangGraph tool loop (stockdesk.agent)
     max_agent_steps: int = Field(default=6, ge=1)  # agent: tool calls per question
-    # agent: v2 = list-taking tools, arithmetic discipline, short answer (prompts.AGENT_PROMPTS)
-    agent_version: Literal["v1", "v2"] = "v1"
+    # agent: prompts.agent_prompt() is built from both. Defaults reproduce 016; 019 was v2 / v2.
+    agent_tools: Literal["v1", "v2"] = "v1"  # v2: tools take lists + arithmetic discipline
+    agent_answer_format: Literal["v1", "v2"] = "v1"  # v1: full reasoning-first answer; v2: short
     agent_prefetch: bool = False  # agent: search the question verbatim before the first model call
     agent_prefetch_prompt: Literal["v1", "v2"] = (
         "v1"  # prompts.AGENT_PREFETCH_PROMPTS; v2: checklist
@@ -72,9 +73,10 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"HYBRID={self.hybrid} requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
             )
-        if self.agent_version != "v1" and self.agent_prefetch:
+        if self.agent_prefetch and (self.agent_tools, self.agent_answer_format) != ("v1", "v1"):
             raise ValueError(
-                f"AGENT_VERSION={self.agent_version} does not support AGENT_PREFETCH=true"
+                "AGENT_PREFETCH=true supports only AGENT_TOOLS=v1 and AGENT_ANSWER_FORMAT=v1 "
+                f"(got {self.agent_tools} / {self.agent_answer_format})"
             )
         if self.agent_prefetch_prompt != "v1" and not self.agent_prefetch:
             raise ValueError(

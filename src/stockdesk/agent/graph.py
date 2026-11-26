@@ -13,8 +13,9 @@ and its pages go into the first message. That search is recorded like the model'
 prefetch=True) but does not count against MAX_AGENT_STEPS. AGENT_PREFETCH_PROMPT picks its
 system prompt; v2 asks for an evidence checklist, which is parsed into the result.
 
-With AGENT_VERSION=v2, both tools take lists (several queries or expressions per call, one step
-each) and the prompt asks for strict arithmetic discipline and a short answer.
+With AGENT_TOOLS=v2, both tools take lists (several queries or expressions per call, one step
+each) and the prompt asks for strict arithmetic discipline. AGENT_ANSWER_FORMAT picks the full
+(v1) or short (v2) answer format; see prompts.agent_prompt.
 
 Every run records a timing breakdown: each model call, each search (embedding, DB query, page
 loading, first-time PDF parse) and each calculate call.
@@ -44,7 +45,7 @@ from stockdesk.prompts import (
     AGENT_LIMIT_MESSAGE,
     AGENT_PREFETCH_MESSAGE,
     AGENT_PREFETCH_PROMPTS,
-    AGENT_PROMPTS,
+    agent_prompt,
 )
 from stockdesk.rag import RagError, build_context
 from stockdesk.retrieval import get_retriever
@@ -97,7 +98,7 @@ TOOLS = [
     },
 ]
 
-# AGENT_VERSION=v2: the same tools, taking lists, so one step can hold several searches or sums.
+# AGENT_TOOLS=v2: the same tools, taking lists, so one step can hold several searches or sums.
 MAX_QUERIES_PER_SEARCH = 3
 MAX_EXPRESSIONS_PER_CALCULATE = 10
 TOOLS_V2 = [
@@ -153,7 +154,7 @@ TOOLS_V2 = [
         },
     },
 ]
-TOOLS_BY_VERSION = {"v1": TOOLS, "v2": TOOLS_V2}  # selected by the AGENT_VERSION setting
+TOOLS_BY_VERSION = {"v1": TOOLS, "v2": TOOLS_V2}  # selected by the AGENT_TOOLS setting
 LIMIT_REACHED = "Not run: tool call limit reached."
 
 
@@ -234,7 +235,7 @@ def run_tool(
 ) -> tuple[str, ToolCall, list[Document], list[str]]:
     """Run one tool call; return (reply for the model, record, pages found, queries searched).
 
-    version is AGENT_VERSION: v1 tools take one query or expression, v2 tools take lists. Bad
+    version is AGENT_TOOLS: v1 tools take one query or expression, v2 tools take lists. Bad
     arguments and unknown tools become an "Error: ..." reply, so the model can retry.
     """
     start = time.perf_counter()
@@ -446,7 +447,7 @@ def answer(question: str, doc_name: str) -> AgentResult:
 
     llm = ChatOpenAI(model=settings.llm_model, temperature=0, api_key=settings.openai_api_key)
     max_steps = settings.max_agent_steps
-    graph = build_graph(llm, doc_name, max_steps, settings.agent_version)
+    graph = build_graph(llm, doc_name, max_steps, settings.agent_tools)
     if settings.agent_prefetch:
         context, record, docs, queries = prefetch(question, doc_name)
         messages = [
@@ -456,7 +457,7 @@ def answer(question: str, doc_name: str) -> AgentResult:
         initial = {"tool_calls": [record], "docs": docs, "queries": queries}
     else:
         context = ""
-        system = AGENT_PROMPTS[settings.agent_version]
+        system = agent_prompt(settings.agent_tools, settings.agent_answer_format)
         messages = [SystemMessage(system), HumanMessage(f"Question: {question}")]
         initial = {"tool_calls": [], "docs": [], "queries": []}
     state = graph.invoke(

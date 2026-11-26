@@ -73,32 +73,18 @@ _AGENT_SEARCH_CHECKLIST = """\
 - Never fill a checklist item from general knowledge, and never substitute a related figure
   for a missing one.
 """
-_AGENT_REST = f"""\
+# The agent prompt is built from two choices (agent_prompt below):
+#   AGENT_TOOLS: v1 = one query / one expression per call; v2 = list tools + arithmetic
+#     discipline (agent.graph.TOOLS_V2). The tools text must match the schemas the model gets.
+#   AGENT_ANSWER_FORMAT: v1 = the full reasoning-first answer (as answer prompt v2);
+#     v2 = the short format of experiment 019.
+_AGENT_CALCULATE = """\
 - Use calculate for every arithmetic step, including simple ones. Do not do arithmetic in
   your head.
 
-Write the final answer in this order:
-1. Figures: list the figures and statements the question needs, each with its page, e.g.
-   "Net sales FY2023: $14,694 million (page 49)".
-2. Calculation: if the question needs a calculation, show each step with the result that
-   calculate returned. Round only at the end.
-3. Assessment: if the question asks for a judgment (e.g. whether a margin improved, or whether
-   a metric is useful for this company), reason from the figures and the filing's own
-   explanations. The filing does not need to state the conclusion in those words.
-4. End with one final line that starts with "Answer:" and gives the conclusion. It must agree
-   with your figures and calculation; if they point the other way, change the conclusion,
-   not the numbers.
-
-Only if the facts the question needs are still not found after searching, reply with exactly
-"{REFUSAL_PHRASE}." and nothing else: no figures, no "Answer:" line. Never give that reply
-only because the question asks for a judgment.
-Cite page numbers as (page 12) or (pages 12, 14)."""
-
-AGENT_PROMPT = _AGENT_INTRO + _AGENT_SEARCH + _AGENT_REST
-
-# AGENT_VERSION=v2 (experiment 019): list-taking tools (agent.graph.TOOLS_V2), arithmetic
-# discipline, and a short answer. Not built from the v1 pieces: the tool descriptions differ.
-AGENT_PROMPT_V2 = f"""You are a financial analyst answering questions about a company's SEC filing.
+"""
+_AGENT_TOOLS_V2 = """\
+You are a financial analyst answering questions about a company's SEC filing.
 You have two tools. Each takes a list, so one call can do several things:
 - search_filings(queries): searches this filing with up to 3 queries at once and returns the
   matching pages with page numbers.
@@ -124,6 +110,22 @@ Arithmetic:
   from it. Never write a number you worked out yourself, and never say you used calculate for
   a result it did not return.
 
+"""
+_AGENT_FORMAT_V1 = """\
+Write the final answer in this order:
+1. Figures: list the figures and statements the question needs, each with its page, e.g.
+   "Net sales FY2023: $14,694 million (page 49)".
+2. Calculation: if the question needs a calculation, show each step with the result that
+   calculate returned. Round only at the end.
+3. Assessment: if the question asks for a judgment (e.g. whether a margin improved, or whether
+   a metric is useful for this company), reason from the figures and the filing's own
+   explanations. The filing does not need to state the conclusion in those words.
+4. End with one final line that starts with "Answer:" and gives the conclusion. It must agree
+   with your figures and calculation; if they point the other way, change the conclusion,
+   not the numbers.
+
+"""
+_AGENT_FORMAT_V2 = """\
 Answer briefly, in this format and nothing else:
 Figures: one line per figure used: what it is, the value, (page N).
 Calculation: one line per calculate expression, as "expression = result". Leave this out if
@@ -134,11 +136,25 @@ filing's own explanations. The filing does not need to state the conclusion in t
 Answer: one line with the conclusion. It must agree with your figures and calculation; if they
 point the other way, change the conclusion, not the numbers.
 
+"""
+_AGENT_CLOSING = f"""\
 Only if the facts the question needs are still not found after searching, reply with exactly
 "{REFUSAL_PHRASE}." and nothing else: no figures, no "Answer:" line. Never give that reply
 only because the question asks for a judgment.
 Cite page numbers as (page 12) or (pages 12, 14)."""
-AGENT_PROMPTS = {"v1": AGENT_PROMPT, "v2": AGENT_PROMPT_V2}  # selected by AGENT_VERSION
+_AGENT_REST = _AGENT_CALCULATE + _AGENT_FORMAT_V1 + _AGENT_CLOSING  # the prefetch prompts' tail
+
+AGENT_TOOLS_TEXT = {"v1": _AGENT_INTRO + _AGENT_SEARCH + _AGENT_CALCULATE, "v2": _AGENT_TOOLS_V2}
+AGENT_ANSWER_FORMATS = {"v1": _AGENT_FORMAT_V1, "v2": _AGENT_FORMAT_V2}
+
+
+def agent_prompt(tools: str = "v1", answer_format: str = "v1") -> str:
+    """The agent's system prompt for an AGENT_TOOLS and AGENT_ANSWER_FORMAT pair."""
+    return AGENT_TOOLS_TEXT[tools] + AGENT_ANSWER_FORMATS[answer_format] + _AGENT_CLOSING
+
+
+AGENT_PROMPT = agent_prompt("v1", "v1")  # experiment 016 (the defaults)
+AGENT_PROMPT_V2 = agent_prompt("v2", "v2")  # experiment 019 (AGENT_VERSION=v2 before the split)
 AGENT_PREFETCH_PROMPT = _AGENT_INTRO + _AGENT_SEARCH_PREFETCHED + _AGENT_REST
 AGENT_PREFETCH_PROMPT_V2 = _AGENT_INTRO + _AGENT_SEARCH_CHECKLIST + _AGENT_REST
 # selected by the AGENT_PREFETCH_PROMPT setting (AGENT_PREFETCH=true only)
