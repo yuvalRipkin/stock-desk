@@ -143,6 +143,7 @@ to FinanceBench results over a shared store of all filings.
 | [011_large_embedding](results/011_large_embedding.json) | 007 on `text-embedding-3-large` (3072 dims) | 1000 / 200 overlap | 10 | 67.8% ± 5.1 | 66.7% ± 0.0 | 66.7% ± 0.0 | 7.8% ± 1.9 | 1.21 s / 3.78 s* |
 | [012_prompt_v2](results/012_prompt_v2.json) | 011 + answer prompt v2 (figures, steps, `Answer:` line) | 1000 / 200 overlap | 10 | 73.3% ± 5.8 | 66.7% ± 0.0 | 66.7% ± 0.0 | 4.4% ± 1.9 | 1.87 s / 5.07 s* |
 | [015_hybrid_bm25](results/015_hybrid_bm25.json) | 012 + BM25 hybrid (BM25 k=10, fused with RRF) | 1000 / 200 overlap | 10 + 10 BM25 | 61.1% ± 3.8 | 56.7% ± 0.0 | 56.7% ± 0.0 | 6.7% ± 0.0 | 2.86 s / 7.07 s* |
+| [016_agent](results/016_agent.json) | 012's retrieval as a LangGraph agent tool (`search_filings`, `calculate`, ≤ 6 calls) | 1000 / 200 overlap | 10 per search | 83.3% ± 3.3 | 87.8% ± 3.8 | 87.8% ± 3.8 | 0.0% ± 0.0 | 5.52 s / 10.59 s* |
 
 All experiments answer with `gpt-5.4-mini` and are judged by `gpt-5.4`; 001–010 embed with
 `text-embedding-3-small`, 011 with `text-embedding-3-large`. \*p95 includes a cold start (the
@@ -173,6 +174,10 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
   questions up, 2 down, identical retrieval); refusals 4.4%. Adopted; now the default config.
 - **015 (BM25 + vector hybrid):** evidence hit 56.7% vs 66.7% (−3 questions), accuracy 61.1% vs
   73.3% (−12.2, beyond noise); BM25-only pages displace vector's 4th–5th pages. Rejected.
+- **016 (LangGraph agent):** accuracy 83.3% vs 73.3% (+10.0, beyond noise), evidence hit 87.8%;
+  ~$0.0127 vs ~$0.0041 per question at list price (3.1x, before prompt caching), p50 5.5 s vs
+  1.9 s. No invented figures, but copying errors into `calculate` and cited calls that never ran.
+  Stepping stone, not final.
 
 ## Roadmap
 
@@ -182,7 +187,7 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
   - Optional last retrieval experiment: BM25 + vector hybrid with RRF, on the dev split only.
 - **Phase 3: LangGraph agent** (in progress): `search_filings` as a tool, `calculate`, multi-step
   retrieval. Developed on dev, measured once on test.
-  - Step 1 (done, not yet evaluated): minimal ReAct agent, `ANSWER_MODE=agent`.
+  - Step 1 (done, 016): minimal ReAct agent, `ANSWER_MODE=agent`.
 - **Phase 4: Eval quality** (planned): judge validation against human labels, an automated
   citation check (do the cited pages contain the stated figures), eval in CI.
 - **Phase 5: Observability and UI** (planned): tracing, cost per question, Gradio UI.
