@@ -13,6 +13,9 @@ and its pages go into the first message. That search is recorded like the model'
 prefetch=True) but does not count against MAX_AGENT_STEPS. AGENT_PREFETCH_PROMPT picks its
 system prompt; v2 asks for an evidence checklist, which is parsed into the result.
 
+With AGENT_VERSION=v2, both tools take lists (several queries or expressions per call, one step
+each) and the prompt asks for strict arithmetic discipline and a short answer.
+
 Every run records a timing breakdown: each model call, each search (embedding, DB query, page
 loading, first-time PDF parse) and each calculate call.
 """
@@ -41,7 +44,7 @@ from stockdesk.prompts import (
     AGENT_LIMIT_MESSAGE,
     AGENT_PREFETCH_MESSAGE,
     AGENT_PREFETCH_PROMPTS,
-    AGENT_PROMPT,
+    AGENT_PROMPTS,
 )
 from stockdesk.rag import RagError, build_context
 from stockdesk.retrieval import get_retriever
@@ -93,6 +96,64 @@ TOOLS = [
         },
     },
 ]
+
+# AGENT_VERSION=v2: the same tools, taking lists, so one step can hold several searches or sums.
+MAX_QUERIES_PER_SEARCH = 3
+MAX_EXPRESSIONS_PER_CALCULATE = 10
+TOOLS_V2 = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search_filings",
+            "description": (
+                f"Search the filing with up to {MAX_QUERIES_PER_SEARCH} queries at once. Returns "
+                "the full text of the best-matching pages for all the queries, each page once, "
+                "headed by its page number."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "maxItems": MAX_QUERIES_PER_SEARCH,
+                        "description": "What to look for, each phrased the way a 10-K phrases it.",
+                    }
+                },
+                "required": ["queries"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "calculate",
+            "description": (
+                f"Evaluate up to {MAX_EXPRESSIONS_PER_CALCULATE} arithmetic expressions at once: "
+                "numbers, + - * / **, parentheses, round() and abs(). Write numbers without "
+                'thousands separators or units. Returns one line per expression: "expression = '
+                'result".'
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expressions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                        "maxItems": MAX_EXPRESSIONS_PER_CALCULATE,
+                        "description": 'e.g. ["23601 - 16434", "(23601 - 16434) / 16434 * 100"]',
+                    }
+                },
+                "required": ["expressions"],
+                "additionalProperties": False,
+            },
+        },
+    },
+]
+TOOLS_BY_VERSION = {"v1": TOOLS, "v2": TOOLS_V2}  # selected by the AGENT_VERSION setting
 LIMIT_REACHED = "Not run: tool call limit reached."
 
 
@@ -107,6 +168,7 @@ class ToolCall:
     # parse and rewrite_ms / bm25_ms when QUERY_REWRITE / HYBRID are on
     timing: dict[str, Any] | None = None
     prefetch: bool = False  # run in code before the loop (AGENT_PREFETCH), not by the model
+    query_pages: list[list[int]] | None = None  # v2 searches: pages returned for each query
 
 
 @dataclass
@@ -167,13 +229,19 @@ def prefetch(question: str, doc_name: str) -> tuple[str, ToolCall, list[Document
     return context, record, docs, queries
 
 
-def run_tool(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document], list[str]]:
+def run_tool(
+    call: dict, doc_name: str, version: str = "v1"
+) -> tuple[str, ToolCall, list[Document], list[str]]:
     """Run one tool call; return (reply for the model, record, pages found, queries searched).
 
-    Bad arguments and unknown tools become an "Error: ..." reply, so the model can retry.
+    version is AGENT_VERSION: v1 tools take one query or expression, v2 tools take lists. Bad
+    arguments and unknown tools become an "Error: ..." reply, so the model can retry.
     """
     start = time.perf_counter()
-    reply, record, docs, queries = _run_tool(call, doc_name)
+    if version == "v2":
+        reply, record, docs, queries = _run_tool_v2(call, doc_name)
+    else:
+        reply, record, docs, queries = _run_tool(call, doc_name)
     record.ms = elapsed_ms(start)
     return reply, record, docs, queries
 
@@ -201,10 +269,83 @@ def _run_tool(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document],
     return f"Error: unknown tool {name!r}; use search_filings or calculate.", record, [], []
 
 
-def build_graph(llm: Any, doc_name: str, max_steps: int):
+def strings(value: Any) -> list[str]:
+    """The non-empty strings of a list argument (anything else is dropped)."""
+    if not isinstance(value, list):
+        return []
+    return [v.strip() for v in value if isinstance(v, str) and v.strip()]
+
+
+def _run_tool_v2(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document], list[str]]:
+    name, args = call["name"], call.get("args") or {}
+    record = ToolCall(name=name, args=args, pages=[])
+    if name == "search_filings":
+        queries = strings(args.get("queries"))
+        if not queries:
+            return "Error: search_filings needs a list of query strings.", record, [], []
+        return search_many(queries, doc_name, record)
+    if name == "calculate":
+        expressions = args.get("expressions")
+        if not isinstance(expressions, list) or not expressions:
+            reply = "Error: calculate needs a list of expression strings."
+        else:
+            reply = calculate_many(expressions)
+        record.result = reply
+        return reply, record, [], []
+    return f"Error: unknown tool {name!r}; use search_filings or calculate.", record, [], []
+
+
+def search_many(
+    queries: list[str], doc_name: str, record: ToolCall
+) -> tuple[str, ToolCall, list[Document], list[str]]:
+    """Run each query (up to MAX_QUERIES_PER_SEARCH) and return their pages, each page once."""
+    run, skipped = queries[:MAX_QUERIES_PER_SEARCH], queries[MAX_QUERIES_PER_SEARCH:]
+    docs: list[Document] = []
+    searched: list[str] = []
+    timing: dict[str, Any] = {"queries": len(run)}
+    record.query_pages = []
+    for query in run:
+        _, found, query_searched, query_timing = search_filings(query, doc_name)
+        docs.extend(found)
+        searched.extend(query_searched)
+        record.query_pages.append([d.metadata["page"] for d in found])
+        for key, value in query_timing.items():
+            if isinstance(value, bool):
+                timing[key] = timing.get(key, False) or value
+            else:
+                timing[key] = timing.get(key, 0.0) + value
+    pages = unique_pages(docs)
+    record.pages = [d.metadata["page"] for d in pages]
+    record.timing = timing
+    header = [
+        f'Query "{q}": pages {", ".join(map(str, p))}'
+        for q, p in zip(run, record.query_pages, strict=True)
+    ]
+    if skipped:
+        header.append(f"Not run (at most {MAX_QUERIES_PER_SEARCH} queries per call): {skipped}")
+    return "\n".join(header) + "\n\n" + build_context(pages), record, docs, searched
+
+
+def calculate_many(expressions: list[Any]) -> str:
+    """One line per expression: "expression = result" (or "= Error: ...")."""
+    run = expressions[:MAX_EXPRESSIONS_PER_CALCULATE]
+    lines = [
+        f"{e} = {calculate_tool(e)}" if isinstance(e, str) else f"{e!r} = Error: not a string"
+        for e in run
+    ]
+    if len(expressions) > len(run):
+        lines.append(
+            f"Not run: {len(expressions) - len(run)} more "
+            f"(at most {MAX_EXPRESSIONS_PER_CALCULATE} expressions per call)"
+        )
+    return "\n".join(lines)
+
+
+def build_graph(llm: Any, doc_name: str, max_steps: int, version: str = "v1"):
     """The compiled agent graph for one filing. llm is a chat model supporting bind_tools."""
-    with_tools = llm.bind_tools(TOOLS)
-    without_tools = llm.bind_tools(TOOLS, tool_choice="none")  # the limit turn: answer only
+    tools_schema = TOOLS_BY_VERSION[version]
+    with_tools = llm.bind_tools(tools_schema)
+    without_tools = llm.bind_tools(tools_schema, tool_choice="none")  # the limit turn: answer only
 
     def agent(state: AgentState) -> dict:
         start = time.perf_counter()
@@ -222,7 +363,7 @@ def build_graph(llm: Any, doc_name: str, max_steps: int):
             if i >= remaining:  # every tool call still needs a reply
                 reply = LIMIT_REACHED
             else:
-                reply, record, docs, queries = run_tool(call, doc_name)
+                reply, record, docs, queries = run_tool(call, doc_name, version)
                 update["tool_calls"].append(record)
                 update["docs"].extend(docs)
                 update["queries"].extend(queries)
@@ -255,6 +396,12 @@ def call_usage(message: AIMessage) -> dict[str, int]:
     }
 
 
+def expression_count(args: dict) -> int:
+    """Expressions in a calculate call: a v2 list, or one for v1."""
+    expressions = args.get("expressions")
+    return len(expressions) if isinstance(expressions, list) else 1
+
+
 def timing_summary(model_ms: list[float], tool_calls: list[ToolCall]) -> dict[str, Any]:
     """Per-question timing: model calls, searches (summed breakdown) and calculate calls."""
     searches = [c for c in tool_calls if c.name == "search_filings" and c.timing is not None]
@@ -267,7 +414,8 @@ def timing_summary(model_ms: list[float], tool_calls: list[ToolCall]) -> dict[st
         "model_calls": len(model_ms),
         "model_ms": sum(model_ms),
         "model_call_ms": model_ms,
-        "searches": len(searches),
+        "searches": sum(c.timing.get("queries", 1) for c in searches),  # queries run
+        "search_calls": len(searches),
         "search_ms": sum(c.ms or 0.0 for c in searches),
         "embed_ms": total("embed_ms"),
         "db_ms": total("db_ms"),
@@ -275,6 +423,7 @@ def timing_summary(model_ms: list[float], tool_calls: list[ToolCall]) -> dict[st
         "pdf_parses": sum(bool(c.timing.get("pdf_parse")) for c in searches),
         "pdf_parse_ms": total("pdf_parse_ms"),
         "calculate_calls": len(calcs),
+        "calculate_expressions": sum(expression_count(c.args) for c in calcs),
         "calculate_ms": sum(c.ms or 0.0 for c in calcs),
     }
 
@@ -297,7 +446,7 @@ def answer(question: str, doc_name: str) -> AgentResult:
 
     llm = ChatOpenAI(model=settings.llm_model, temperature=0, api_key=settings.openai_api_key)
     max_steps = settings.max_agent_steps
-    graph = build_graph(llm, doc_name, max_steps)
+    graph = build_graph(llm, doc_name, max_steps, settings.agent_version)
     if settings.agent_prefetch:
         context, record, docs, queries = prefetch(question, doc_name)
         messages = [
@@ -307,7 +456,8 @@ def answer(question: str, doc_name: str) -> AgentResult:
         initial = {"tool_calls": [record], "docs": docs, "queries": queries}
     else:
         context = ""
-        messages = [SystemMessage(AGENT_PROMPT), HumanMessage(f"Question: {question}")]
+        system = AGENT_PROMPTS[settings.agent_version]
+        messages = [SystemMessage(system), HumanMessage(f"Question: {question}")]
         initial = {"tool_calls": [], "docs": [], "queries": []}
     state = graph.invoke(
         {"messages": messages, **initial, "model_ms": []},

@@ -20,7 +20,7 @@ def format_tool_call(i: int, call: agent.ToolCall) -> str:
     if call.name == "search_filings":
         outcome = f"pages {', '.join(map(str, call.pages))}" if call.pages else "no pages"
     else:
-        outcome = call.result
+        outcome = (call.result or "").replace("\n", "; ")
     ms = f" [{call.ms:.0f} ms]" if call.ms is not None else ""
     prefetch = " (prefetch)" if call.prefetch else ""
     return f"{i}. {call.name}({args}){prefetch} -> {outcome}{ms}"

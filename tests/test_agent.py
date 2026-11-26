@@ -14,6 +14,8 @@ from stockdesk.prompts import (
     AGENT_PREFETCH_PROMPT,
     AGENT_PREFETCH_PROMPT_V2,
     AGENT_PROMPT,
+    AGENT_PROMPT_V2,
+    REFUSAL_PHRASE,
 )
 from stockdesk.rag import RagError
 from stockdesk.retrieval import Retrieval
@@ -45,9 +47,11 @@ class ScriptedLLM:
         self.replies = list(replies)
         self.calls: list[tuple[str | None, list]] = []
         self.events = events if events is not None else []  # shared with the fake search
+        self.bound: list = []  # the tool schemas of each bind_tools call
 
     def bind_tools(self, tools, tool_choice=None):
         assert [t["function"]["name"] for t in tools] == ["search_filings", "calculate"]
+        self.bound.append(tools)
         llm = self
 
         class Bound:
@@ -89,6 +93,7 @@ def run(monkeypatch: pytest.MonkeyPatch):
         doc_name: str = "DOC",
         prefetch: bool = False,
         prefetch_prompt: str = "v1",
+        version: str = "v1",
     ):
         llm = ScriptedLLM(replies, events)
         settings = graph.get_settings().model_copy(
@@ -98,6 +103,7 @@ def run(monkeypatch: pytest.MonkeyPatch):
                 "retrieval_k": 7,
                 "agent_prefetch": prefetch,
                 "agent_prefetch_prompt": prefetch_prompt,
+                "agent_version": version,
             }
         )
         monkeypatch.setattr(graph, "get_settings", lambda: settings)
@@ -415,6 +421,150 @@ def test_checklist_is_not_recorded_with_the_v1_prompt(run):
     assert result.checklist is None
 
 
+# --- AGENT_VERSION=v2: list-taking tools, arithmetic discipline, short answer ----------------
+
+
+def test_v1_binds_the_single_item_tools_and_v1_prompt(run):
+    _, llm, _ = run([reply("Answer: x")])
+
+    assert llm.bound == [graph.TOOLS, graph.TOOLS]
+    assert llm.calls[0][1][0].content == AGENT_PROMPT
+
+
+def test_v2_binds_the_list_tools_and_v2_prompt(run):
+    _, llm, _ = run([reply("Answer: x")], version="v2")
+
+    assert llm.bound == [graph.TOOLS_V2, graph.TOOLS_V2]
+    assert llm.calls[0][1][0].content == AGENT_PROMPT_V2
+    search, calc = (t["function"]["parameters"]["properties"] for t in graph.TOOLS_V2)
+    assert search["queries"]["maxItems"] == graph.MAX_QUERIES_PER_SEARCH
+    assert calc["expressions"]["type"] == "array"
+
+
+def test_v2_prompt_asks_for_discipline_and_a_short_answer():
+    prompt = " ".join(AGENT_PROMPT_V2.split())  # ignore line wrapping
+    for phrase in (
+        "Put all the searches you need in one call",
+        "put every expression you can already write into one call",
+        "digit by digit",
+        "never say you used calculate for a result it did not return",
+        "at most two sentences",
+        f'reply with exactly "{REFUSAL_PHRASE}."',
+        "Answer: one line with the conclusion",
+    ):
+        assert phrase in prompt, phrase
+
+
+def test_v2_search_runs_every_query_in_one_step(run):
+    result, llm, searches = run(
+        [
+            reply("", ("search_filings", {"queries": ["balance sheet", "income statement"]})),
+            reply("Answer: x"),
+        ],
+        version="v2",
+    )
+
+    assert searches == [("balance sheet", "DOC", 7), ("income statement", "DOC", 7)]
+    assert result.steps == 1
+    [call] = result.tool_calls
+    assert call.query_pages == [[10, 11], [20, 21]]
+    assert call.pages == [10, 11, 20, 21]
+    assert call.timing["queries"] == 2
+    assert result.queries == ["balance sheet", "income statement"]
+    [tool_reply] = tool_messages(llm.calls[-1][1])
+    assert tool_reply.content.startswith(
+        'Query "balance sheet": pages 10, 11\nQuery "income statement": pages 20, 21\n\n'
+    )
+    assert "[page 21]\ntext of page 21" in tool_reply.content
+    assert result.timing["searches"] == 2
+    assert result.timing["search_calls"] == 1
+
+
+def test_v2_search_shows_a_page_found_by_two_queries_once(run, monkeypatch):
+    page = Document(page_content="balance sheet text", metadata={"doc_name": "DOC", "page": 97})
+    monkeypatch.setattr(graph, "get_retriever", lambda name: lambda q, d, k: Retrieval([page], [q]))
+    _, llm, _ = run(
+        [reply("", ("search_filings", {"queries": ["a", "b"]})), reply("Answer: x")],
+        version="v2",
+    )
+
+    [tool_reply] = tool_messages(llm.calls[-1][1])
+    assert tool_reply.content.count("[page 97]") == 1
+
+
+def test_v2_search_runs_at_most_three_queries_per_call(run):
+    result, llm, searches = run(
+        [
+            reply("", ("search_filings", {"queries": ["a", "b", "c", "d"]})),
+            reply("Answer: x"),
+        ],
+        version="v2",
+    )
+
+    assert [q for q, _, _ in searches] == ["a", "b", "c"]
+    [tool_reply] = tool_messages(llm.calls[-1][1])
+    assert "Not run (at most 3 queries per call): ['d']" in tool_reply.content
+
+
+def test_v2_search_is_still_bound_to_the_question_filing(run):
+    _, _, searches = run(
+        [
+            reply("", ("search_filings", {"queries": ["revenue"], "doc_name": "OTHER_2022_10K"})),
+            reply("Answer: x"),
+        ],
+        version="v2",
+    )
+
+    assert searches == [("revenue", "DOC", 7)]
+
+
+def test_v2_calculate_evaluates_every_expression_in_one_step(run):
+    expressions = ["23601 - 16434", "(23601 - 16434) / 16434 * 100", "1 / 0", "__import__('os')"]
+    result, llm, _ = run(
+        [reply("", ("calculate", {"expressions": expressions})), reply("Answer: x")],
+        version="v2",
+    )
+
+    assert result.steps == 1
+    [tool_reply] = tool_messages(llm.calls[-1][1])
+    lines = tool_reply.content.splitlines()
+    assert lines[0] == "23601 - 16434 = 7167"
+    assert lines[1] == "(23601 - 16434) / 16434 * 100 = 43.6108068638"
+    assert lines[2] == "1 / 0 = Error: division by zero"
+    assert lines[3].startswith("__import__('os') = Error: ")
+    assert result.tool_calls[0].result == tool_reply.content
+    assert (result.timing["calculate_calls"], result.timing["calculate_expressions"]) == (1, 4)
+
+
+def test_v2_calculate_caps_the_list_and_rejects_bad_arguments():
+    assert graph.calculate_many([str(i) for i in range(12)]).splitlines()[-1] == (
+        "Not run: 2 more (at most 10 expressions per call)"
+    )
+    assert graph.calculate_many(["1 + 1", 5]).splitlines() == [
+        "1 + 1 = 2",
+        "5 = Error: not a string",
+    ]
+    for args in ({}, {"expressions": "1 + 1"}, {"expressions": []}):
+        reply_text, *_ = graph.run_tool({"name": "calculate", "args": args, "id": "x"}, "DOC", "v2")
+        assert reply_text == "Error: calculate needs a list of expression strings."
+    for args in ({}, {"queries": "revenue"}, {"queries": ["", 3]}):
+        reply_text, *_ = graph.run_tool(
+            {"name": "search_filings", "args": args, "id": "x"}, "DOC", "v2"
+        )
+        assert reply_text == "Error: search_filings needs a list of query strings."
+
+
+def test_v2_step_limit_counts_calls_not_items(run):
+    many = ("search_filings", {"queries": ["a", "b", "c"]})
+    result, llm, searches = run(
+        [reply("", many), reply("", many), reply("Answer: x")], max_steps=2, version="v2"
+    )
+
+    assert len(searches) == 6
+    assert result.steps == 2
+    assert llm.calls[-1][0] == "none"
+
+
 # --- timing -------------------------------------------------------------------------------------
 
 
@@ -552,7 +702,13 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
     assert record.retrieved_pages == [3, 9]
     assert record.page_hit and record.evidence_hit
     assert record.steps == 2
-    no_timing = {"result": None, "ms": None, "timing": None, "prefetch": False}
+    no_timing = {
+        "result": None,
+        "ms": None,
+        "timing": None,
+        "prefetch": False,
+        "query_pages": None,
+    }
     assert record.tool_calls == [
         {"name": "search_filings", "args": {"query": "revenue"}, "pages": [3], **no_timing},
         {"name": "search_filings", "args": {"query": "costs"}, "pages": [9], **no_timing},
