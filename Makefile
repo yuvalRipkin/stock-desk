@@ -19,12 +19,14 @@ fetch:
 ingest:
 	uv run python -m stockdesk.ingestion.ingestion --split $(SPLIT)
 
+# ANSWER_MODE=agent answers with the LangGraph agent and prints its tool calls (make passes
+# command-line variables to the recipe's environment, where the settings read it)
 ask:
 ifndef DOC
-	$(error usage: make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?")
+	$(error usage: make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?" [ANSWER_MODE=agent])
 endif
 ifndef Q
-	$(error usage: make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?")
+	$(error usage: make ask DOC=AMD_2022_10K Q="What was total revenue in 2022?" [ANSWER_MODE=agent])
 endif
 	uv run python -m stockdesk.ask --doc $(DOC) "$(Q)"
 

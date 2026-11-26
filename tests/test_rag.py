@@ -2,6 +2,7 @@
 
 import pytest
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage
 
 from stockdesk import rag
 from stockdesk.evals.metrics import is_refusal
@@ -17,7 +18,7 @@ class FakeLLM:
 
     def invoke(self, messages):
         self.sent.append(messages)
-        return type("Reply", (), {"text": "Answer: 42 (page 1)"})()
+        return AIMessage(content="Answer: 42 (page 1)")
 
 
 @pytest.fixture

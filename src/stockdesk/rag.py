@@ -23,6 +23,8 @@ class RagResult:
     answer: str
     docs: list[Document]
     queries: list[str]  # searched: the question, then any rewrites
+    input_tokens: int | None = None
+    output_tokens: int | None = None
 
 
 def build_context(docs: list[Document]) -> str:
@@ -47,4 +49,11 @@ def answer(question: str, doc_name: str, k: int | None = None) -> RagResult:
             HumanMessage(f"Context:\n{build_context(docs)}\n\nQuestion: {question}"),
         ]
     )
-    return RagResult(answer=response.text, docs=docs, queries=retrieval.queries)
+    usage = response.usage_metadata or {}
+    return RagResult(
+        answer=response.text,
+        docs=docs,
+        queries=retrieval.queries,
+        input_tokens=usage.get("input_tokens"),
+        output_tokens=usage.get("output_tokens"),
+    )

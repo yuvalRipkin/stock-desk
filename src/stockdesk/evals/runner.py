@@ -3,6 +3,10 @@
 Usage:
     uv run python -m stockdesk.evals.runner --name 001_naive_1000 [--runs 3] [--split dev] [--force]
 
+ANSWER_MODE=agent answers with the LangGraph agent instead of the RAG pipeline; its records also
+hold the tool calls and steps. Page and evidence hit then use every page the agent's searches
+returned.
+
 Questions run sequentially. A failing question is recorded with its error and the run continues.
 """
 
@@ -17,6 +21,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from stockdesk import agent, rag
 from stockdesk.config import get_settings
 from stockdesk.data import ROOT, SPLITS
 from stockdesk.evals.dataset import EvalCase, load_cases
@@ -28,7 +33,7 @@ from stockdesk.evals.metrics import (
     is_refusal,
     page_hit,
 )
-from stockdesk.rag import answer, build_context
+from stockdesk.rag import build_context
 
 RESULTS_DIR = ROOT / "results"
 SUMMARY_METRICS = [
@@ -60,10 +65,15 @@ class QuestionRecord:
     refusal: bool
     distinct_pages: int
     context_chars: int | None  # characters of context sent to the LLM; None in pre-005 files
-    latency_ms: float | None  # latency of rag.answer() only
+    latency_ms: float | None  # latency of rag.answer() / agent.answer() only
     error: str | None
     queries: list[str] | None = None  # searched: the question, then any rewrites; None pre-008
     answer_chars: int | None = None  # length of the answer; None pre-012
+    input_tokens: int | None = None  # summed over the question's LLM calls; None pre-016
+    output_tokens: int | None = None
+    # ANSWER_MODE=agent only: [{name, args, pages, result}] in order, and tool calls run
+    tool_calls: list[dict] | None = None
+    steps: int | None = None
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -154,7 +164,10 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
     )
     try:
         start = time.perf_counter()
-        result = answer(case.question, case.doc_name)
+        if get_settings().answer_mode == "agent":
+            result = agent.answer(case.question, case.doc_name)
+        else:
+            result = rag.answer(case.question, case.doc_name)
         record.latency_ms = (time.perf_counter() - start) * 1000
     except Exception as e:  # noqa: BLE001 - one bad question must not stop the run
         record.error = f"answer: {type(e).__name__}: {e}"
@@ -169,7 +182,14 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
     record.evidence_hit = evidence_hit([d.page_content for d in result.docs], case.evidence_texts)
     record.refusal = is_refusal(result.answer)
     record.distinct_pages = distinct_pages(pages)
-    record.context_chars = len(build_context(result.docs))
+    record.input_tokens = result.input_tokens
+    record.output_tokens = result.output_tokens
+    if isinstance(result, agent.AgentResult):
+        record.tool_calls = [asdict(call) for call in result.tool_calls]
+        record.steps = result.steps
+        record.context_chars = result.context_chars  # all tool replies the model read
+    else:
+        record.context_chars = len(build_context(result.docs))
 
     try:
         verdict = judge(case.question, case.gold_answer, result.answer)

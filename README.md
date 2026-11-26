@@ -51,6 +51,10 @@ Retrieved pages (AMD_2022_10K): 47, 66, 49, 48, 67
 `DOC` is any `doc_name` in `data_manifest.txt`. Pages are zero-based PDF page indexes, the same
 numbering FinanceBench uses for its evidence pages.
 
+Add `ANSWER_MODE=agent` to answer with the LangGraph agent instead (`src/stockdesk/agent/`). It
+calls `search_filings` (the retrieval pipeline above, on `DOC` only) and `calculate` (safe
+arithmetic) up to `MAX_AGENT_STEPS=6` times, and the output also lists its tool calls.
+
 ## Data
 
 Questions, document metadata and filing PDFs come from
@@ -176,8 +180,9 @@ Hypotheses and example questions: [docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 - **Phase 2: Retrieval and eval** (done): eval runner, metrics, LLM judge, experiments 001–012,
   and the held-out evaluation (accuracy 38.1% → 71.9% on 120 unseen questions).
   - Optional last retrieval experiment: BM25 + vector hybrid with RRF, on the dev split only.
-- **Phase 3: LangGraph agent** (planned): `search_filings` as a tool, `calculate`, multi-step
+- **Phase 3: LangGraph agent** (in progress): `search_filings` as a tool, `calculate`, multi-step
   retrieval. Developed on dev, measured once on test.
+  - Step 1 (done, not yet evaluated): minimal ReAct agent, `ANSWER_MODE=agent`.
 - **Phase 4: Eval quality** (planned): judge validation against human labels, an automated
   citation check (do the cited pages contain the stated figures), eval in CI.
 - **Phase 5: Observability and UI** (planned): tracing, cost per question, Gradio UI.
