@@ -5,13 +5,14 @@ Document per page holding that page's full text, so a passage the splitter cut a
 reaches the model intact.
 
 With QUERY_REWRITE=multi, it searches k chunks for the question and for each LLM rewrite of it,
-and merges the ranked lists with Reciprocal Rank Fusion before picking pages.
+and merges the ranked lists with Reciprocal Rank Fusion before picking pages. With HYBRID=bm25,
+a BM25 keyword ranking of the question (BM25_K chunks) is fused in the same way.
 """
 
 from langchain_core.documents import Document
 
 from stockdesk.config import get_settings
-from stockdesk.retrieval import Retrieval, naive, rewrite
+from stockdesk.retrieval import Retrieval, bm25, naive, rewrite
 from stockdesk.retrieval.pages import dedup_by_page, page_texts, rrf_merge
 
 
@@ -28,10 +29,10 @@ def search(question: str, doc_name: str | None = None, k: int | None = None) -> 
     if k is None:
         k = settings.retrieval_k
     queries = search_queries(question)
-    if len(queries) == 1:
-        hits = naive.retrieve(question, doc_name, k)
-    else:
-        hits = rrf_merge([naive.retrieve(q, doc_name, k) for q in queries])
+    ranked = [naive.retrieve(q, doc_name, k) for q in queries]
+    if settings.hybrid == "bm25":
+        ranked.append(bm25.retrieve(question, doc_name, settings.bm25_k))
+    hits = ranked[0] if len(ranked) == 1 else rrf_merge(ranked)
     pages = []
     for hit in dedup_by_page(hits, settings.max_pages):
         name, page = hit.metadata["doc_name"], hit.metadata["page"]

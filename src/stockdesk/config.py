@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     query_rewrite: Literal["none", "multi"] = "none"  # multi: LLM rewrites, fused with RRF
     n_rewrites: int = Field(default=3, ge=1)  # multi: rewritten queries per question
     rewrite_model: str = "gpt-5.4-mini"  # multi: writes the search queries
+    hybrid: Literal["none", "bm25"] = "none"  # bm25: BM25 keyword ranking fused in with RRF
+    bm25_k: int = Field(default=10, ge=1)  # bm25: keyword-ranked chunks per question
     answer_prompt: Literal["v1", "v2"] = "v2"  # prompts.ANSWER_PROMPTS; v2: figures, steps, Answer:
 
     @model_validator(mode="after")
@@ -57,6 +59,10 @@ class Settings(BaseSettings):
         if self.query_rewrite == "multi" and self.retriever != "expand":
             raise ValueError(
                 f"QUERY_REWRITE=multi requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
+            )
+        if self.hybrid != "none" and self.retriever != "expand":
+            raise ValueError(
+                f"HYBRID={self.hybrid} requires RETRIEVER=expand (got RETRIEVER={self.retriever})"
             )
         return self
 

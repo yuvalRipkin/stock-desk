@@ -73,3 +73,14 @@ DEFAULTS_012 = {
 def test_answer_prompt_defaults_to_v2_and_is_in_the_experiment_config():
     assert settings().answer_prompt == "v2"
     assert settings(answer_prompt="v1").experiment_config()["answer_prompt"] == "v1"
+
+
+def test_hybrid_defaults_to_none_and_is_in_the_experiment_config():
+    assert (settings().hybrid, settings().bm25_k) == ("none", 10)
+    config = settings(hybrid="bm25", bm25_k=20).experiment_config()
+    assert (config["hybrid"], config["bm25_k"]) == ("bm25", 20)
+
+
+def test_hybrid_with_another_retriever_is_rejected():
+    with pytest.raises(ValidationError, match="HYBRID=bm25 requires RETRIEVER=expand"):
+        settings(retriever="naive", hybrid="bm25")
