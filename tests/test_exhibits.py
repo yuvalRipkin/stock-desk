@@ -90,7 +90,11 @@ class FakeStore:
         self.docs = docs
         self.filters: list[dict | None] = []
 
-    def similarity_search(self, question: str, k: int, filter: dict | None) -> list[Document]:
+    @property
+    def embeddings(self):
+        return type("FakeEmbeddings", (), {"embed_query": lambda self, text: [0.0]})()
+
+    def similarity_search_by_vector(self, embedding: list, k: int, filter: dict | None):
         self.filters.append(filter)
         return [d for d in self.docs if matches(filter, d.metadata)][:k]
 

@@ -32,17 +32,30 @@ Cite page numbers as (page 12) or (pages 12, 14)."""
 ANSWER_PROMPTS = {"v1": PROMPT, "v2": PROMPT_V2}  # selected by the ANSWER_PROMPT setting
 
 # ANSWER_MODE=agent: the system prompt of the LangGraph agent (stockdesk.agent).
-AGENT_PROMPT = f"""You are a financial analyst answering questions about a company's SEC filing.
+_AGENT_INTRO = """You are a financial analyst answering questions about a company's SEC filing.
 You have two tools:
 - search_filings(query): searches this filing and returns matching pages with page numbers.
 - calculate(expression): evaluates arithmetic, e.g. "(14694 - 13520) / 13520 * 100".
 You have a limited number of tool calls.
 
 How to work:
+"""
+_AGENT_SEARCH = """\
 - Always search before answering. Use only facts from pages that the searches returned.
 - If a figure you need is missing from the pages, search again with different wording: name
   the financial statement (balance sheet, income statement, cash flow statement) or the line
   items behind a metric (e.g. "operating income" and "net sales" for operating margin).
+"""
+# AGENT_PREFETCH=true: the question arrives with an initial search's pages
+_AGENT_SEARCH_PREFETCHED = """\
+- The question comes with the results of an initial search for the question itself. Read
+  those pages first. Use only facts from them and from pages your own searches return.
+- Call search_filings only if a figure or section the question needs is missing from those
+  pages, and word the query differently from the question: name the financial statement
+  (balance sheet, income statement, cash flow statement) or the line items behind a metric
+  (e.g. "operating income" and "net sales" for operating margin).
+"""
+_AGENT_REST = f"""\
 - Use calculate for every arithmetic step, including simple ones. Do not do arithmetic in
   your head.
 
@@ -62,6 +75,17 @@ Only if the facts the question needs are still not found after searching, reply 
 "{REFUSAL_PHRASE}." and nothing else: no figures, no "Answer:" line. Never give that reply
 only because the question asks for a judgment.
 Cite page numbers as (page 12) or (pages 12, 14)."""
+
+AGENT_PROMPT = _AGENT_INTRO + _AGENT_SEARCH + _AGENT_REST
+AGENT_PREFETCH_PROMPT = _AGENT_INTRO + _AGENT_SEARCH_PREFETCHED + _AGENT_REST
+
+# AGENT_PREFETCH=true: the first user message; formatted with question and context (the pages).
+AGENT_PREFETCH_MESSAGE = """Question: {question}
+
+Initial search results: search_filings was run with the question above as the query. These
+are the pages it returned:
+
+{context}"""
 
 # Sent to the agent when it has used all its tool calls; it then answers without tools.
 AGENT_LIMIT_MESSAGE = """You have used all your tool calls. Do not call any more tools.

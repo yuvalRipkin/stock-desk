@@ -7,6 +7,7 @@ from stockdesk.data import read_manifest
 from stockdesk.retrieval import Retrieval
 from stockdesk.retrieval.exhibits import exhibit_cutoff
 from stockdesk.store import get_store
+from stockdesk.timing import timed
 
 
 def doc_filter(doc_name: str) -> dict:
@@ -31,7 +32,13 @@ def retrieve(question: str, doc_name: str | None = None, k: int | None = None) -
     """Return the k chunks most similar to the question, from doc_name if given."""
     if k is None:
         k = get_settings().retrieval_k
-    return get_store().similarity_search(question, k=k, filter=search_filter(doc_name))
+    store = get_store()
+    where = search_filter(doc_name)
+    # similarity_search() embeds then searches by vector; split so each step can be timed
+    with timed("embed_ms"):
+        embedding = store.embeddings.embed_query(question)
+    with timed("db_ms"):
+        return store.similarity_search_by_vector(embedding, k=k, filter=where)
 
 
 def search(question: str, doc_name: str | None = None, k: int | None = None) -> Retrieval:

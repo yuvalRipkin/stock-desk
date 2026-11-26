@@ -14,12 +14,14 @@ from langchain_core.documents import Document
 from stockdesk.config import get_settings
 from stockdesk.retrieval import Retrieval, bm25, naive, rewrite
 from stockdesk.retrieval.pages import dedup_by_page, page_texts, rrf_merge
+from stockdesk.timing import timed
 
 
 def search_queries(question: str) -> list[str]:
     """The queries to search: the question, then its rewrites if QUERY_REWRITE=multi."""
     if get_settings().query_rewrite == "multi":
-        return [question, *rewrite.rewrite_queries(question)]
+        with timed("rewrite_ms"):
+            return [question, *rewrite.rewrite_queries(question)]
     return [question]
 
 
@@ -31,13 +33,15 @@ def search(question: str, doc_name: str | None = None, k: int | None = None) -> 
     queries = search_queries(question)
     ranked = [naive.retrieve(q, doc_name, k) for q in queries]
     if settings.hybrid == "bm25":
-        ranked.append(bm25.retrieve(question, doc_name, settings.bm25_k))
+        with timed("bm25_ms"):
+            ranked.append(bm25.retrieve(question, doc_name, settings.bm25_k))
     hits = ranked[0] if len(ranked) == 1 else rrf_merge(ranked)
     pages = []
-    for hit in dedup_by_page(hits, settings.max_pages):
-        name, page = hit.metadata["doc_name"], hit.metadata["page"]
-        text = page_texts(name).get(page, hit.page_content)
-        pages.append(Document(page_content=text, metadata={"doc_name": name, "page": page}))
+    with timed("pages_ms"):
+        for hit in dedup_by_page(hits, settings.max_pages):
+            name, page = hit.metadata["doc_name"], hit.metadata["page"]
+            text = page_texts(name).get(page, hit.page_content)
+            pages.append(Document(page_content=text, metadata={"doc_name": name, "page": page}))
     return Retrieval(docs=pages, queries=queries)
 
 

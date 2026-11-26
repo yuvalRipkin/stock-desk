@@ -9,7 +9,7 @@ from stockdesk.agent import graph
 from stockdesk.evals import runner
 from stockdesk.evals.dataset import EvalCase
 from stockdesk.evals.judge import Verdict
-from stockdesk.prompts import AGENT_LIMIT_MESSAGE, AGENT_PROMPT
+from stockdesk.prompts import AGENT_LIMIT_MESSAGE, AGENT_PREFETCH_PROMPT, AGENT_PROMPT
 from stockdesk.rag import RagError
 from stockdesk.retrieval import Retrieval
 
@@ -36,9 +36,10 @@ def reply(
 class ScriptedLLM:
     """Returns the scripted replies in order; records (tool_choice, messages) for each call."""
 
-    def __init__(self, replies: list[AIMessage]):
+    def __init__(self, replies: list[AIMessage], events: list | None = None):
         self.replies = list(replies)
         self.calls: list[tuple[str | None, list]] = []
+        self.events = events if events is not None else []  # shared with the fake search
 
     def bind_tools(self, tools, tool_choice=None):
         assert [t["function"]["name"] for t in tools] == ["search_filings", "calculate"]
@@ -47,6 +48,7 @@ class ScriptedLLM:
         class Bound:
             def invoke(self, messages):
                 llm.calls.append((tool_choice, list(messages)))
+                llm.events.append("model")
                 if not llm.replies:
                     raise AssertionError("the model was called more often than scripted")
                 return llm.replies.pop(0)
@@ -56,11 +58,17 @@ class ScriptedLLM:
 
 @pytest.fixture
 def run(monkeypatch: pytest.MonkeyPatch):
-    """run(replies, max_steps=6) -> (AgentResult, model, searches as (query, doc_name, k))."""
+    """run(replies, max_steps=6, prefetch=False) -> (AgentResult, model, searches).
+
+    searches are (query, doc_name, k); model.events is the order of "model" calls and
+    ("search", query) calls.
+    """
     searches: list[tuple[str, str | None, int | None]] = []
+    events: list = []
 
     def fake_search(query: str, doc_name: str | None, k: int | None) -> Retrieval:
         searches.append((query, doc_name, k))
+        events.append(("search", query))
         page = 10 * len(searches)  # pages 10, 11 for the 1st search, 20, 21 for the 2nd, ...
         docs = [
             Document(page_content=f"text of page {p}", metadata={"doc_name": doc_name, "page": p})
@@ -70,10 +78,17 @@ def run(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(graph, "get_retriever", lambda name: fake_search)
 
-    def _run(replies: list[AIMessage], max_steps: int = 6, doc_name: str = "DOC"):
-        llm = ScriptedLLM(replies)
+    def _run(
+        replies: list[AIMessage], max_steps: int = 6, doc_name: str = "DOC", prefetch: bool = False
+    ):
+        llm = ScriptedLLM(replies, events)
         settings = graph.get_settings().model_copy(
-            update={"llm_model": "fake-model", "max_agent_steps": max_steps, "retrieval_k": 7}
+            update={
+                "llm_model": "fake-model",
+                "max_agent_steps": max_steps,
+                "retrieval_k": 7,
+                "agent_prefetch": prefetch,
+            }
         )
         monkeypatch.setattr(graph, "get_settings", lambda: settings)
         monkeypatch.setattr(graph, "ChatOpenAI", lambda **kw: llm)
@@ -263,7 +278,141 @@ def test_a_filing_with_no_chunks_raises(run, monkeypatch):
         run([reply("", ("search_filings", {"query": "revenue"}))])
 
 
+# --- prefetch -----------------------------------------------------------------------------------
+
+
+def test_prefetch_searches_the_question_verbatim_before_the_first_model_call(run):
+    result, llm, searches = run([reply("Answer: 42 (page 10)")], prefetch=True)
+
+    assert searches == [("What was revenue?", "DOC", 7)]
+    assert llm.events == [("search", "What was revenue?"), "model"]
+    system, first = llm.calls[0][1]
+    assert system.content == AGENT_PREFETCH_PROMPT
+    assert first.content.startswith("Question: What was revenue?\n\nInitial search results")
+    assert first.content.endswith("[page 10]\ntext of page 10\n\n[page 11]\ntext of page 11")
+    # recorded like any other search, marked as the prefetch
+    [call] = result.tool_calls
+    assert (call.name, call.args, call.pages, call.prefetch) == (
+        "search_filings",
+        {"query": "What was revenue?"},
+        [10, 11],
+        True,
+    )
+    assert result.steps == 0
+    assert [d.metadata["page"] for d in result.docs] == [10, 11]
+    assert result.queries == ["What was revenue?"]
+    assert result.context_chars == len(first.content.split("returned:\n\n", 1)[1])
+    assert result.timing["searches"] == 1
+
+
+def test_prefetch_does_not_count_toward_the_step_limit(run):
+    search = ("search_filings", {"query": "balance sheet"})
+    result, llm, searches = run(
+        [reply("", search), reply("", search), reply("Answer: x")], max_steps=2, prefetch=True
+    )
+
+    assert len(searches) == 3  # the prefetch plus the model's 2
+    assert result.steps == 2
+    assert [c.prefetch for c in result.tool_calls] == [True, False, False]
+    assert [choice for choice, _ in llm.calls] == [None, None, "none"]  # limit after 2, not 1
+
+
+def test_without_prefetch_the_first_model_call_is_unchanged(run):
+    result, llm, searches = run(
+        [reply("", ("search_filings", {"query": "net sales"})), reply("Answer: x")],
+        prefetch=False,
+    )
+
+    assert llm.events[0] == "model"
+    system, first = llm.calls[0][1]
+    assert (system.content, first.content) == (AGENT_PROMPT, "Question: What was revenue?")
+    assert len(llm.calls[0][1]) == 2
+    assert searches == [("net sales", "DOC", 7)]
+    assert not any(c.prefetch for c in result.tool_calls)
+
+
+# --- timing -------------------------------------------------------------------------------------
+
+
+def test_timing_fields_are_recorded(run):
+    result, _, _ = run(
+        [
+            reply("", ("search_filings", {"query": "net sales"})),
+            reply("", ("calculate", {"expression": "1 + 1"})),
+            reply("Answer: 2"),
+        ],
+        prefetch=True,
+    )
+
+    t = result.timing
+    assert t["model_calls"] == 3
+    assert len(t["model_call_ms"]) == 3
+    assert t["model_ms"] == pytest.approx(sum(t["model_call_ms"]))
+    assert (t["searches"], t["calculate_calls"]) == (2, 1)
+    for key in ("search_ms", "embed_ms", "db_ms", "pages_ms", "pdf_parse_ms", "calculate_ms"):
+        assert t[key] >= 0
+    assert t["pdf_parses"] == 0
+    assert all(c.ms is not None and c.ms >= 0 for c in result.tool_calls)
+    searches = [c for c in result.tool_calls if c.name == "search_filings"]
+    assert all(isinstance(c.timing, dict) for c in searches)
+
+
+def test_search_timing_breaks_down_embedding_db_pages_and_first_pdf_parse(monkeypatch):
+    """Through the real expand/naive retrievers, with the store and PDF reader faked."""
+    from stockdesk.retrieval import expand, naive
+    from stockdesk.retrieval import pages as pages_module
+
+    hit = Document(page_content="chunk", metadata={"doc_name": "DOC", "page": 4})
+    store = type(
+        "FakeStore",
+        (),
+        {
+            "embeddings": type("E", (), {"embed_query": lambda self, q: [0.0]})(),
+            "similarity_search_by_vector": lambda self, e, k, filter: [hit],
+        },
+    )()
+    settings = graph.get_settings().model_copy(
+        update={
+            "retriever": "expand",
+            "exclude_exhibits": False,
+            "query_rewrite": "none",
+            "hybrid": "none",
+        }
+    )
+    for module in (graph, expand, naive):
+        monkeypatch.setattr(module, "get_settings", lambda: settings)
+    monkeypatch.setattr(naive, "get_store", lambda: store)
+    monkeypatch.setattr(pages_module, "load_pdf", lambda name: [hit])
+    pages_module.page_texts.cache_clear()
+    try:
+        first = graph.search_filings("q", "DOC")[3]
+        second = graph.search_filings("q", "DOC")[3]
+    finally:
+        pages_module.page_texts.cache_clear()
+
+    for timing in (first, second):
+        assert {"embed_ms", "db_ms", "pages_ms"} <= timing.keys()
+    assert first["pdf_parse"] is True and first["pdf_parse_ms"] >= 0
+    assert "pdf_parse" not in second  # cached: no parse the second time
+
+
 # --- runner -------------------------------------------------------------------------------------
+
+
+TIMING = {
+    "model_calls": 3,
+    "model_ms": 3000.0,
+    "model_call_ms": [1000.0, 1000.0, 1000.0],
+    "searches": 2,
+    "search_ms": 400.0,
+    "embed_ms": 300.0,
+    "db_ms": 60.0,
+    "pages_ms": 40.0,
+    "pdf_parses": 1,
+    "pdf_parse_ms": 35.0,
+    "calculate_calls": 0,
+    "calculate_ms": 0.0,
+}
 
 
 def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatch):
@@ -289,6 +438,7 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
             {"input_tokens": 700, "output_tokens": 60, "cache_read_tokens": 512},
         ],
         context_chars=123,
+        timing=TIMING,
     )
     settings = runner.get_settings().model_copy(update={"answer_mode": "agent"})
     monkeypatch.setattr(runner, "get_settings", lambda: settings)
@@ -310,12 +460,14 @@ def test_runner_records_the_agent_trace_and_scores_all_searched_pages(monkeypatc
     assert record.retrieved_pages == [3, 9]
     assert record.page_hit and record.evidence_hit
     assert record.steps == 2
+    no_timing = {"result": None, "ms": None, "timing": None, "prefetch": False}
     assert record.tool_calls == [
-        {"name": "search_filings", "args": {"query": "revenue"}, "pages": [3], "result": None},
-        {"name": "search_filings", "args": {"query": "costs"}, "pages": [9], "result": None},
+        {"name": "search_filings", "args": {"query": "revenue"}, "pages": [3], **no_timing},
+        {"name": "search_filings", "args": {"query": "costs"}, "pages": [9], **no_timing},
     ]
     assert (record.input_tokens, record.output_tokens) == (900, 80)
     assert record.cache_read_tokens == 512
     assert record.llm_usage == result.llm_usage
+    assert record.timing == TIMING
     assert record.context_chars == 123
     assert record.queries == ["revenue", "costs"]

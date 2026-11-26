@@ -7,9 +7,17 @@ off, so it answers with what it has.
 
 The filing is bound per question: search_filings takes only a query, and every search runs
 on the question's doc_name, whatever arguments the model sends.
+
+With AGENT_PREFETCH=true, search_filings runs on the question verbatim before the loop starts
+and its pages go into the first message. That search is recorded like the model's own (with
+prefetch=True) but does not count against MAX_AGENT_STEPS.
+
+Every run records a timing breakdown: each model call, each search (embedding, DB query, page
+loading, first-time PDF parse) and each calculate call.
 """
 
 import operator
+import time
 from dataclasses import dataclass
 from typing import Annotated, Any, TypedDict
 
@@ -27,9 +35,15 @@ from langgraph.graph.message import add_messages
 
 from stockdesk.agent.calculate import calculate_tool
 from stockdesk.config import get_settings
-from stockdesk.prompts import AGENT_LIMIT_MESSAGE, AGENT_PROMPT
+from stockdesk.prompts import (
+    AGENT_LIMIT_MESSAGE,
+    AGENT_PREFETCH_MESSAGE,
+    AGENT_PREFETCH_PROMPT,
+    AGENT_PROMPT,
+)
 from stockdesk.rag import RagError, build_context
 from stockdesk.retrieval import get_retriever
+from stockdesk.timing import elapsed_ms, recording
 
 # OpenAI tool schemas. search_filings has no doc_name parameter: the filing is not the model's
 # choice.
@@ -86,6 +100,11 @@ class ToolCall:
     args: dict[str, Any]  # as the model sent them
     pages: list[int]  # pages returned, in rank order; empty unless a search
     result: str | None = None  # calculate's reply; None for searches (see pages)
+    ms: float | None = None  # wall time of the call
+    # searches: embed_ms, db_ms, pages_ms, plus pdf_parse / pdf_parse_ms on a first-time PDF
+    # parse and rewrite_ms / bm25_ms when QUERY_REWRITE / HYBRID are on
+    timing: dict[str, Any] | None = None
+    prefetch: bool = False  # run in code before the loop (AGENT_PREFETCH), not by the model
 
 
 @dataclass
@@ -93,14 +112,15 @@ class AgentResult:
     answer: str
     docs: list[Document]  # every page any search returned, once each, in first-seen order
     queries: list[str]  # searched, across all search_filings calls (incl. any rewrites)
-    tool_calls: list[ToolCall]  # the calls that ran, in order
-    steps: int  # tool calls run (at most MAX_AGENT_STEPS)
+    tool_calls: list[ToolCall]  # the calls that ran, in order, the prefetch search first
+    steps: int  # tool calls the model made (at most MAX_AGENT_STEPS; excludes the prefetch)
     llm_calls: int
     input_tokens: int  # incl. cache_read_tokens
     output_tokens: int
     cache_read_tokens: int  # input tokens served from OpenAI's prompt cache (billed at 10%)
     llm_usage: list[dict[str, int]]  # per LLM call: input_tokens, output_tokens, cache_read_tokens
-    context_chars: int  # characters of tool results sent to the model
+    context_chars: int  # characters of search pages and tool results sent to the model
+    timing: dict[str, Any]  # per-question breakdown, see timing_summary()
 
 
 class AgentState(TypedDict):
@@ -108,15 +128,40 @@ class AgentState(TypedDict):
     tool_calls: Annotated[list[ToolCall], operator.add]
     docs: Annotated[list[Document], operator.add]
     queries: Annotated[list[str], operator.add]
+    model_ms: Annotated[list[float], operator.add]  # wall time of each model call
 
 
-def search_filings(query: str, doc_name: str) -> tuple[str, list[Document], list[str]]:
-    """Run the configured retrieval on doc_name; return (tool reply, pages, queries searched)."""
+def steps_used(tool_calls: list[ToolCall]) -> int:
+    """Tool calls that count against MAX_AGENT_STEPS: all but the prefetch search."""
+    return sum(not call.prefetch for call in tool_calls)
+
+
+def search_filings(query: str, doc_name: str) -> tuple[str, list[Document], list[str], dict]:
+    """Run the configured retrieval on doc_name.
+
+    Returns (tool reply, pages, queries searched, timing breakdown).
+    """
     settings = get_settings()
-    retrieval = get_retriever(settings.retriever)(query, doc_name, settings.retrieval_k)
+    with recording() as timing:
+        retrieval = get_retriever(settings.retriever)(query, doc_name, settings.retrieval_k)
     if not retrieval.docs:
         raise RagError(f"no chunks found for doc '{doc_name}'. Has it been ingested?")
-    return build_context(retrieval.docs), retrieval.docs, retrieval.queries
+    return build_context(retrieval.docs), retrieval.docs, retrieval.queries, timing
+
+
+def prefetch(question: str, doc_name: str) -> tuple[str, ToolCall, list[Document], list[str]]:
+    """The AGENT_PREFETCH search: the question verbatim. Returns (pages text, record, ...)."""
+    start = time.perf_counter()
+    context, docs, queries, timing = search_filings(question, doc_name)
+    record = ToolCall(
+        name="search_filings",
+        args={"query": question},
+        pages=[d.metadata["page"] for d in docs],
+        ms=elapsed_ms(start),
+        timing=timing,
+        prefetch=True,
+    )
+    return context, record, docs, queries
 
 
 def run_tool(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document], list[str]]:
@@ -124,6 +169,13 @@ def run_tool(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document], 
 
     Bad arguments and unknown tools become an "Error: ..." reply, so the model can retry.
     """
+    start = time.perf_counter()
+    reply, record, docs, queries = _run_tool(call, doc_name)
+    record.ms = elapsed_ms(start)
+    return reply, record, docs, queries
+
+
+def _run_tool(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document], list[str]]:
     name, args = call["name"], call.get("args") or {}
     record = ToolCall(name=name, args=args, pages=[])
     if name == "search_filings":
@@ -131,8 +183,9 @@ def run_tool(call: dict, doc_name: str) -> tuple[str, ToolCall, list[Document], 
         if not isinstance(query, str) or not query.strip():
             reply = "Error: search_filings needs a non-empty query string."
             return reply, record, [], []
-        reply, docs, queries = search_filings(query, doc_name)  # never args["doc_name"]
+        reply, docs, queries, timing = search_filings(query, doc_name)  # never args["doc_name"]
         record.pages = [d.metadata["page"] for d in docs]
+        record.timing = timing
         return reply, record, docs, queries
     if name == "calculate":
         expression = args.get("expression")
@@ -151,13 +204,16 @@ def build_graph(llm: Any, doc_name: str, max_steps: int):
     without_tools = llm.bind_tools(TOOLS, tool_choice="none")  # the limit turn: answer only
 
     def agent(state: AgentState) -> dict:
-        if len(state["tool_calls"]) >= max_steps:
+        start = time.perf_counter()
+        if steps_used(state["tool_calls"]) >= max_steps:
             stop = HumanMessage(AGENT_LIMIT_MESSAGE)
-            return {"messages": [stop, without_tools.invoke([*state["messages"], stop])]}
-        return {"messages": [with_tools.invoke(state["messages"])]}
+            reply = without_tools.invoke([*state["messages"], stop])
+            return {"messages": [stop, reply], "model_ms": [elapsed_ms(start)]}
+        reply = with_tools.invoke(state["messages"])
+        return {"messages": [reply], "model_ms": [elapsed_ms(start)]}
 
     def tools(state: AgentState) -> dict:
-        remaining = max_steps - len(state["tool_calls"])
+        remaining = max_steps - steps_used(state["tool_calls"])
         update: dict[str, list] = {"messages": [], "tool_calls": [], "docs": [], "queries": []}
         for i, call in enumerate(state["messages"][-1].tool_calls):
             if i >= remaining:  # every tool call still needs a reply
@@ -175,7 +231,7 @@ def build_graph(llm: Any, doc_name: str, max_steps: int):
     def route(state: AgentState) -> str:
         last = state["messages"][-1]
         wants_tools = isinstance(last, AIMessage) and bool(last.tool_calls)
-        return "tools" if wants_tools and len(state["tool_calls"]) < max_steps else END
+        return "tools" if wants_tools and steps_used(state["tool_calls"]) < max_steps else END
 
     graph = StateGraph(AgentState)
     graph.add_node("agent", agent)
@@ -193,6 +249,30 @@ def call_usage(message: AIMessage) -> dict[str, int]:
         "input_tokens": usage.get("input_tokens", 0),
         "output_tokens": usage.get("output_tokens", 0),
         "cache_read_tokens": (usage.get("input_token_details") or {}).get("cache_read", 0),
+    }
+
+
+def timing_summary(model_ms: list[float], tool_calls: list[ToolCall]) -> dict[str, Any]:
+    """Per-question timing: model calls, searches (summed breakdown) and calculate calls."""
+    searches = [c for c in tool_calls if c.name == "search_filings" and c.timing is not None]
+    calcs = [c for c in tool_calls if c.name == "calculate"]
+
+    def total(key: str) -> float:
+        return sum(c.timing.get(key, 0.0) for c in searches)
+
+    return {
+        "model_calls": len(model_ms),
+        "model_ms": sum(model_ms),
+        "model_call_ms": model_ms,
+        "searches": len(searches),
+        "search_ms": sum(c.ms or 0.0 for c in searches),
+        "embed_ms": total("embed_ms"),
+        "db_ms": total("db_ms"),
+        "pages_ms": total("pages_ms"),
+        "pdf_parses": sum(bool(c.timing.get("pdf_parse")) for c in searches),
+        "pdf_parse_ms": total("pdf_parse_ms"),
+        "calculate_calls": len(calcs),
+        "calculate_ms": sum(c.ms or 0.0 for c in calcs),
     }
 
 
@@ -215,13 +295,19 @@ def answer(question: str, doc_name: str) -> AgentResult:
     llm = ChatOpenAI(model=settings.llm_model, temperature=0, api_key=settings.openai_api_key)
     max_steps = settings.max_agent_steps
     graph = build_graph(llm, doc_name, max_steps)
+    if settings.agent_prefetch:
+        context, record, docs, queries = prefetch(question, doc_name)
+        messages = [
+            SystemMessage(AGENT_PREFETCH_PROMPT),
+            HumanMessage(AGENT_PREFETCH_MESSAGE.format(question=question, context=context)),
+        ]
+        initial = {"tool_calls": [record], "docs": docs, "queries": queries}
+    else:
+        context = ""
+        messages = [SystemMessage(AGENT_PROMPT), HumanMessage(f"Question: {question}")]
+        initial = {"tool_calls": [], "docs": [], "queries": []}
     state = graph.invoke(
-        {
-            "messages": [SystemMessage(AGENT_PROMPT), HumanMessage(f"Question: {question}")],
-            "tool_calls": [],
-            "docs": [],
-            "queries": [],
-        },
+        {"messages": messages, **initial, "model_ms": []},
         # each step is an agent turn then a tools turn; plus the final answer and some slack
         {"recursion_limit": 2 * max_steps + 5},
     )
@@ -234,11 +320,13 @@ def answer(question: str, doc_name: str) -> AgentResult:
         docs=unique_pages(state["docs"]),
         queries=state["queries"],
         tool_calls=state["tool_calls"],
-        steps=len(state["tool_calls"]),
+        steps=steps_used(state["tool_calls"]),
         llm_calls=len(replies),
         input_tokens=sum(u["input_tokens"] for u in usage),
         output_tokens=sum(u["output_tokens"] for u in usage),
         cache_read_tokens=sum(u["cache_read_tokens"] for u in usage),
         llm_usage=usage,
-        context_chars=sum(len(m.text) for m in messages if isinstance(m, ToolMessage)),
+        context_chars=len(context)
+        + sum(len(m.text) for m in messages if isinstance(m, ToolMessage)),
+        timing=timing_summary(state["model_ms"], state["tool_calls"]),
     )

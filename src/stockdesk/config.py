@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     answer_prompt: Literal["v1", "v2"] = "v2"  # prompts.ANSWER_PROMPTS; v2: figures, steps, Answer:
     answer_mode: Literal["rag", "agent"] = "rag"  # agent: LangGraph tool loop (stockdesk.agent)
     max_agent_steps: int = Field(default=6, ge=1)  # agent: tool calls per question
+    agent_prefetch: bool = False  # agent: search the question verbatim before the first model call
 
     @model_validator(mode="after")
     def check_consistency(self) -> "Settings":

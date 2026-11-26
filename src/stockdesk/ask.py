@@ -21,7 +21,9 @@ def format_tool_call(i: int, call: agent.ToolCall) -> str:
         outcome = f"pages {', '.join(map(str, call.pages))}" if call.pages else "no pages"
     else:
         outcome = call.result
-    return f"{i}. {call.name}({args}) -> {outcome}"
+    ms = f" [{call.ms:.0f} ms]" if call.ms is not None else ""
+    prefetch = " (prefetch)" if call.prefetch else ""
+    return f"{i}. {call.name}({args}){prefetch} -> {outcome}{ms}"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,12 +52,20 @@ def main(argv: list[str] | None = None) -> int:
     pages = list(dict.fromkeys(d.metadata["page"] for d in result.docs))
     print(f"\nRetrieved pages ({args.doc}): {', '.join(map(str, pages))}")
     if isinstance(result, agent.AgentResult):
-        print(f"\nTool calls ({result.steps}):")
+        prefetched = " + prefetch" if any(c.prefetch for c in result.tool_calls) else ""
+        print(f"\nTool calls ({result.steps}{prefetched}):")
         for i, call in enumerate(result.tool_calls, 1):
             print(f"  {format_tool_call(i, call)}")
         print(
             f"LLM calls: {result.llm_calls}, tokens: {result.input_tokens} in / "
-            f"{result.output_tokens} out"
+            f"{result.output_tokens} out ({result.cache_read_tokens} cached)"
+        )
+        t = result.timing
+        print(
+            f"Time: model {t['model_ms']:.0f} ms over {t['model_calls']} calls; searches "
+            f"{t['search_ms']:.0f} ms (embed {t['embed_ms']:.0f}, DB {t['db_ms']:.0f}, pages "
+            f"{t['pages_ms']:.0f}, PDF parses {t['pdf_parses']} in {t['pdf_parse_ms']:.0f}); "
+            f"calculate {t['calculate_ms']:.0f} ms"
         )
     return 0
 

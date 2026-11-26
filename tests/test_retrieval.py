@@ -191,9 +191,19 @@ class FakeStore:
         self.hits_by_query = hits_by_query
         self.searches: list[tuple[str, int, dict | None]] = []
 
-    def similarity_search(self, query: str, k: int, filter: dict | None = None):
+    @property
+    def embeddings(self):
+        return FakeEmbeddings()
+
+    def similarity_search_by_vector(self, embedding: list, k: int, filter: dict | None = None):
+        query = embedding[0]  # FakeEmbeddings "embeds" a query as [query]
         self.searches.append((query, k, filter))
         return self.hits_by_query[query][:k]
+
+
+class FakeEmbeddings:
+    def embed_query(self, text: str) -> list:
+        return [text]
 
 
 @pytest.fixture

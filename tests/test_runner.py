@@ -137,3 +137,64 @@ def test_summarize_run_averages_answer_chars_over_answered_questions():
 
 def test_summarize_run_answer_chars_missing_in_old_records():
     assert summarize_run([record()])["avg_answer_chars"] is None
+
+
+def timing(**overrides) -> dict:
+    t = dict(
+        model_calls=2,
+        model_ms=2000.0,
+        model_call_ms=[800.0, 1200.0],
+        searches=2,
+        search_ms=500.0,
+        embed_ms=300.0,
+        db_ms=100.0,
+        pages_ms=60.0,
+        pdf_parses=0,
+        pdf_parse_ms=0.0,
+        calculate_calls=1,
+        calculate_ms=0.5,
+    )
+    t.update(overrides)
+    return t
+
+
+def test_summarize_run_averages_agent_timing():
+    records = [
+        record(timing=timing(), input_tokens=1000, output_tokens=100, cache_read_tokens=0),
+        record(
+            timing=timing(model_calls=4, model_ms=6000.0, searches=1, embed_ms=200.0, pdf_parses=1),
+            input_tokens=3000,
+            output_tokens=300,
+            cache_read_tokens=2048,
+        ),
+        error_record(),
+    ]
+    s = summarize_run(records)
+
+    assert s["avg_model_calls"] == 3
+    assert s["avg_model_ms"] == 4000
+    assert s["avg_model_ms_per_call"] == pytest.approx(8000 / 6)
+    assert s["avg_searches"] == 1.5
+    assert s["avg_search_embed_ms"] == pytest.approx(500 / 3)  # per search, not per question
+    assert s["avg_search_db_ms"] == pytest.approx(200 / 3)
+    assert s["avg_search_pages_ms"] == pytest.approx(120 / 3)
+    assert s["pdf_parses"] == 1
+    assert s["avg_calculate_ms"] == 0.5
+    assert (s["avg_input_tokens"], s["avg_output_tokens"]) == (2000, 200)
+    assert s["avg_cache_read_tokens"] == 1024
+
+
+def test_summarize_run_timing_is_none_without_agent_records():
+    s = summarize_run([record()])
+
+    assert s["avg_model_calls"] is None
+    assert s["avg_search_embed_ms"] is None
+    assert s["pdf_parses"] is None
+    assert s["avg_cache_read_tokens"] is None
+
+
+def test_summarize_run_calculate_ms_is_none_without_calculate_calls():
+    s = summarize_run([record(timing=timing(calculate_calls=0, calculate_ms=0.0))])
+
+    assert s["avg_calculate_ms"] is None
+    assert s["avg_model_calls"] == 2

@@ -47,7 +47,24 @@ SUMMARY_METRICS = [
     "latency_p50_ms",
     "latency_p95_ms",
     "error_count",
+    # tokens: both modes from 016 on (cache reads from 017); None for older results
+    "avg_input_tokens",
+    "avg_output_tokens",
+    "avg_cache_read_tokens",
 ]
+# ANSWER_MODE=agent timing breakdown (from 017): per question unless the comment says otherwise
+TIMING_METRICS = [
+    "avg_model_calls",
+    "avg_model_ms",
+    "avg_model_ms_per_call",
+    "avg_searches",
+    "avg_search_embed_ms",  # per search
+    "avg_search_db_ms",  # per search
+    "avg_search_pages_ms",  # per search
+    "pdf_parses",  # first-time PDF parses in the run (a cold start per filing)
+    "avg_calculate_ms",  # per calculate call
+]
+SUMMARY_METRICS += TIMING_METRICS
 
 
 @dataclass
@@ -76,6 +93,7 @@ class QuestionRecord:
     tool_calls: list[dict] | None = None
     steps: int | None = None
     llm_usage: list[dict] | None = None  # agent: tokens per LLM call; None pre-017
+    timing: dict | None = None  # agent: graph.timing_summary() breakdown; None pre-017
 
 
 # --- aggregation (pure) -----------------------------------------------------------------------
@@ -113,6 +131,7 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
 
     latencies = [r.latency_ms for r in ok if r.latency_ms is not None]
     return {
+        **summarize_tokens_and_timing(ok),
         "n": n,
         "accuracy": rate("correct"),
         "page_hit_rate": rate("page_hit"),
@@ -124,6 +143,37 @@ def summarize_run(records: list[QuestionRecord]) -> dict[str, float | int | None
         "latency_p50_ms": percentile(latencies, 50),
         "latency_p95_ms": percentile(latencies, 95),
         "error_count": n - len(ok),
+    }
+
+
+def ratio_or_none(numerator: float, denominator: float) -> float | None:
+    return numerator / denominator if denominator else None
+
+
+def summarize_tokens_and_timing(ok: list[QuestionRecord]) -> dict[str, float | int | None]:
+    """Token and agent-timing averages over answered questions that recorded them."""
+    timed = [r.timing for r in ok if r.timing is not None]
+
+    def total(key: str) -> float:
+        return sum(t[key] for t in timed)
+
+    result: dict[str, float | int | None] = {
+        "avg_input_tokens": mean_or_none([r.input_tokens for r in ok]),
+        "avg_output_tokens": mean_or_none([r.output_tokens for r in ok]),
+        "avg_cache_read_tokens": mean_or_none([r.cache_read_tokens for r in ok]),
+    }
+    if not timed:
+        return result | dict.fromkeys(TIMING_METRICS)
+    return result | {
+        "avg_model_calls": total("model_calls") / len(timed),
+        "avg_model_ms": total("model_ms") / len(timed),
+        "avg_model_ms_per_call": ratio_or_none(total("model_ms"), total("model_calls")),
+        "avg_searches": total("searches") / len(timed),
+        "avg_search_embed_ms": ratio_or_none(total("embed_ms"), total("searches")),
+        "avg_search_db_ms": ratio_or_none(total("db_ms"), total("searches")),
+        "avg_search_pages_ms": ratio_or_none(total("pages_ms"), total("searches")),
+        "pdf_parses": int(total("pdf_parses")),
+        "avg_calculate_ms": ratio_or_none(total("calculate_ms"), total("calculate_calls")),
     }
 
 
@@ -191,6 +241,7 @@ def evaluate_case(case: EvalCase) -> QuestionRecord:
         record.tool_calls = [asdict(call) for call in result.tool_calls]
         record.steps = result.steps
         record.llm_usage = result.llm_usage
+        record.timing = result.timing
         record.context_chars = result.context_chars  # all tool replies the model read
     else:
         record.context_chars = len(build_context(result.docs))
